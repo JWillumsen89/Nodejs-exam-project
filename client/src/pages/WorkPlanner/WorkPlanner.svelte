@@ -13,8 +13,6 @@
     import { notificationStore } from '../../stores/notificationStore.js';
 
     import CreateEventModal from './CreateEventModal.svelte';
-    import { droppedEvent, resizedEvent } from './eventDropResize.js';
-    import { getEvents } from './events.js';
 
     $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -22,7 +20,7 @@
     let calendarApi;
     let allResources = [];
     let selectedResourceId = '';
-    let resources = allResources;
+    let resources;
 
     onMount(async () => {
         if (calendarRef) {
@@ -33,8 +31,11 @@
             return;
         }
 
-        let endpoint = $user.user.role === 'admin' ? '/admin/getAllUsers' : '/profile';
-        await fetchUsersData(endpoint);
+        let endpointUsersData = $user.user.role === 'admin' ? '/admin/get-all-users' : '/user/profile';
+        await fetchUsersData(endpointUsersData);
+        let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
+        console.log('endpointEventsData', BASE_URL + endpointEventsData);
+        await fetchEventsData(endpointEventsData);
     });
 
     $: {
@@ -67,8 +68,37 @@
                     id: $user.user.id,
                     title: $user.user.username,
                 };
+                calendarApi.addResource(resource);
                 allResources = [...allResources, resource];
             }
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
+        }
+    }
+
+    async function fetchEventsData(endpoint) {
+        try {
+            let response = await fetch(BASE_URL + endpoint, {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const result = await response.json();
+            console.log('Events result.data', result.data);
+            const transformedData = result.data.map(event => ({
+                id: event.id,
+                resourceId: event.resource_id,
+                start: event.start,
+                end: event.end,
+                title: event.title,
+                status: event.status,
+                description: event.description,
+            }));
+            console.log('transformedData', transformedData);
+            calendarApi.addEventSource(transformedData);
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
@@ -87,10 +117,47 @@
         });
     }
 
+    function formatDate(date) {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    }
+
+    async function updateEventInDatabase(eventInfo, calendarApi) {
+        const event = calendarApi.getEventById(eventInfo.event.id);
+
+        const updatedEvent = {
+            id: event.id,
+            title: event.title,
+            start: formatDate(event.start),
+            end: formatDate(event.end),
+            resourceId: event.getResources().map(resource => resource.id)[0],
+            description: event.extendedProps.description,
+            status: event.extendedProps.status,
+        };
+        console.log('updatedEvent', updatedEvent);
+
+        try {
+            const response = await fetch(BASE_URL + '/admin/update-event', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedEvent),
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const result = await response.json();
+            notificationStore.set({ message: 'Event updated successfully', type: 'success' });
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to update event', type: 'error' });
+        }
+    }
+
     $: options = {
         plugins: [resourceTimelinePlugin, interactionPlugin],
         initialView: 'resourceTimelineWeek',
-        selectable: true,
         views: {
             resourceTimelineWeek: {
                 type: 'resourceTimeline',
@@ -122,23 +189,17 @@
         },
         locale: 'da',
         firstDay: 1,
-        // editable: true,
-        // eventResizableFromStart: true,
-        // droppable: true,
-        // eventResourceEditable: true,
-        // eventDrop: incomingInfo => droppedEvent(incomingInfo, calendarApi),
-        // eventResize: incomingInfo => resizedEvent(incomingInfo, calendarApi),
         editable: $user.user.role === 'admin',
         eventResizableFromStart: $user.user.role === 'admin',
         droppable: $user.user.role === 'admin',
         eventResourceEditable: $user.user.role === 'admin',
-        eventDrop: $user.user.role === 'admin' ? incomingInfo => droppedEvent(incomingInfo, calendarApi) : null,
-        eventResize: $user.user.role === 'admin' ? incomingInfo => resizedEvent(incomingInfo, calendarApi) : null,
-        select: openCreateEventModal,
+        eventDrop: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
+        eventResize: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
+        selectable: $user.user.role === 'admin',
+        select: $user.user.role === 'admin' ? openCreateEventModal : null,
         resources: resources,
-        events: getEvents(),
+        events: null,
         slotLabelFormat: getSlotLabelFormat(window.innerWidth),
-
         resourceAreaHeaderContent: 'Smede:',
         slotDuration: { days: 1 },
         resourceAreaWidth: '190px',

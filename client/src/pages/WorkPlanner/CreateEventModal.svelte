@@ -3,6 +3,7 @@
     import { notificationStore } from '../../stores/notificationStore.js';
     import { writable } from 'svelte/store';
     import { onMount } from 'svelte';
+    import { BASE_URL } from '../../components/Urls.js';
 
     export let isOpen;
     export let calendar;
@@ -15,6 +16,8 @@
         startDate: null,
         endDate: null,
         resourceId: null,
+        description: '',
+        status: '',
     });
 
     onMount(() => {
@@ -29,6 +32,8 @@
             startDate: startDate,
             endDate: formattedEndDate,
             resourceId: parseInt(initialResource.id),
+            description: '',
+            status: '',
         });
         console.log('initialResource:', initialResource);
     });
@@ -39,9 +44,9 @@
 
     async function createEvent(event) {
         event.preventDefault();
-        const { title, startDate, endDate, resourceId } = $eventFormData;
+        const { title, startDate, endDate, resourceId, description, status } = $eventFormData;
 
-        if (!title || !startDate || !endDate || !resourceId) {
+        if (!title || !startDate || !endDate || !resourceId || !description || !status) {
             notificationStore.set({ message: 'Please fill in all fields', type: 'error' });
             return;
         }
@@ -50,13 +55,34 @@
         endDateTime.setDate(endDateTime.getDate() + 1);
         const adjustedEndDate = formatDate(endDateTime);
 
-        console.log('All data: ', title, startDate, adjustedEndDate, resourceId);
-        calendar.addEvent({
-            title: title,
-            start: startDate,
-            end: adjustedEndDate,
-            resourceId: resourceId,
-        });
+        console.log('All data: ', title, startDate, adjustedEndDate, resourceId, description, status);
+        try {
+            const response = await fetch(BASE_URL + '/admin/create-event', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    start: startDate,
+                    end: adjustedEndDate,
+                    resourceId: resourceId,
+                    description: description,
+                    status: status,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Error creating event ' + response.statusText);
+            }
+
+            const data = await response.json();
+            console.log(data);
+        } catch (error) {
+            notificationStore.set({ message: error.message, type: 'error' });
+            return;
+        }
 
         closeModal();
         notificationStore.set({ message: 'Event successfully created!', type: 'success' });
@@ -81,16 +107,28 @@
                     <input id="endDate" type="date" bind:value={$eventFormData.endDate} />
                 </div>
                 <div class="form-group">
-                    <label for="resourceSelect">Resource:</label>
-                    <select id="resourceSelect" bind:value={$eventFormData.resourceId}>
-                        {#each employees as employee}
-                            <option value={employee.id}>{employee.title}</option>
-                        {/each}
-                    </select>
+                    <label for="description">Description:</label>
+                    <textarea id="description" bind:value={$eventFormData.description} placeholder="Description" />
                 </div>
-                <div class="actions">
-                    <button type="submit">Create Event</button>
-                    <button type="button" on:click={closeModal}>Cancel</button>
+                <div class="form-group">
+                    <label for="status">Status:</label>
+                    <select id="status" bind:value={$eventFormData.status}>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="denied">Denied</option>
+                    </select>
+                    <div class="form-group">
+                        <label for="resourceSelect">Resource:</label>
+                        <select id="resourceSelect" bind:value={$eventFormData.resourceId}>
+                            {#each employees as employee}
+                                <option value={employee.id}>{employee.title}</option>
+                            {/each}
+                        </select>
+                    </div>
+                    <div class="actions">
+                        <button type="submit">Create Event</button>
+                        <button type="button" on:click={closeModal}>Cancel</button>
+                    </div>
                 </div>
             </form>
         </div>

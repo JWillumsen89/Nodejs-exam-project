@@ -108,7 +108,7 @@
 
     async function fetchProfileData() {
         try {
-            const response = await fetch(BASE_URL + '/profile', {
+            const response = await fetch(BASE_URL + '/user/profile', {
                 credentials: 'include',
             });
             if (response.ok) {
@@ -186,7 +186,7 @@
 <div class="form-container">
     <form on:submit={$isLogin ? handleSubmit : handleSignup}>
         <label for="username">Username{$isLogin ? ' or email' : ''}:</label>
-        <input type="text" id="username" name="username" required />
+        <input type="text" id="username" name="username" required value="willumsen"/>
 
         {#if !$isLogin}
             <label for="email">Email:</label>
@@ -194,7 +194,7 @@
         {/if}
 
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required />
+        <input type="password" id="password" name="password" required value="Jonathan123"/>
 
         {#if !$isLogin}
             <label for="passwordConfirmation">Confirm Password:</label>

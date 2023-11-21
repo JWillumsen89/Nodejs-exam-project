@@ -17,5 +17,13 @@ export const authorizationController = {
     async createEvent(event) {
         const newEvent = await authorizationService.createEvent(event);
         return newEvent;
+    },
+    async getEventsForUser(userId) {
+        const events = await authorizationService.getEventsForUser(userId);
+        return events;
+    },
+    async updateEvent(event) {
+        const updatedEvent = await authorizationService.updateEvent(event);
+        return updatedEvent;
     }
 };

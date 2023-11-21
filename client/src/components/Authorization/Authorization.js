@@ -3,7 +3,7 @@ import { user } from '../../stores/userStore.js';
 
 export async function checkSession() {
     try {
-        const response = await fetch(BASE_URL + '/profile', {
+        const response = await fetch(BASE_URL + '/user/profile', {
             credentials: 'include',
         });
 

@@ -14,20 +14,31 @@ router.get('/admin/users', isAuthenticated, requireRole(['admin']), async (req, 
     res.send({ data: users });
 });
 
-router.get('/admin/getAllUsers', isAuthenticated, requireRole(['admin']), async (req, res) => {
+router.get('/admin/get-all-users', isAuthenticated, requireRole(['admin']), async (req, res) => {
     const users = await authorizationController.getAllUsers();
     res.send({ data: users });
 });
 
-router.get('admin/getAllEvents', isAuthenticated, requireRole(['admin']), async (req, res) => {
+router.get('/admin/get-all-events', isAuthenticated, requireRole(['admin']), async (req, res) => {
     const events = await authorizationController.getAllEvents();
     res.send({ data: events });
 });
 
 router.post('/admin/create-event', isAuthenticated, requireRole(['admin']), async (req, res) => {
     try {
+        console.log(req.body);
         const event = await authorizationController.createEvent(req.body);
         res.send({ data: { message: 'Event created successfully', event: event } });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
+    }
+});
+
+router.post('/admin/update-event', isAuthenticated, requireRole(['admin']), async (req, res) => {
+    try {
+        console.log(req.body);
+        const event = await authorizationController.updateEvent(req.body);
+        res.send({ data: { message: 'Event updated successfully', event: event } });
     } catch (error) {
         res.status(400).send({ error: error.message });
     }
