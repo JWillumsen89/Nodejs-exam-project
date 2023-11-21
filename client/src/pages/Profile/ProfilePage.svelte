@@ -7,10 +7,8 @@
     import PasswordChangeModal from './PasswordChangeModal.svelte';
     import EditProfileModal from './EditProfileModal.svelte';
     import { formatEuropeanDate } from '../../components/dateFormat.js';
-
-    $: pageTitle.set('Profile');
-    $: dynamicTitlePart.set($pageTitle);
-    $: document.title = getFullTitle($dynamicTitlePart);
+    
+    $: pageTitle.set('Profile'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
     let userData;
 

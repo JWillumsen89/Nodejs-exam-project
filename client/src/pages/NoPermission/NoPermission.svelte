@@ -4,9 +4,7 @@
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
 
-    $: pageTitle.set('No Permission');
-    $: dynamicTitlePart.set($pageTitle);
-    $: document.title = getFullTitle($dynamicTitlePart);
+    $: pageTitle.set('No Permission'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 </script>
 
 {#if !$user.isLoggedIn}

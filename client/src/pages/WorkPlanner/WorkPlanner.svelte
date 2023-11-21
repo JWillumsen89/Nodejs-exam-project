@@ -1,4 +1,6 @@
 <script>
+    // @ts-nocheck
+
     import FullCalendar from 'svelte-fullcalendar';
     import interactionPlugin from '@fullcalendar/interaction';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
@@ -7,19 +9,17 @@
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { onMount } from 'svelte';
     import { user } from '../../stores/userStore.js';
-    import { BaseURL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../components/Urls.js';
+    import { notificationStore } from '../../stores/notificationStore.js';
 
     import CreateEventModal from './CreateEventModal.svelte';
     import { droppedEvent, resizedEvent } from './eventDropResize.js';
     import { getEvents } from './events.js';
 
-    $: pageTitle.set('Work Planner');
-    $: dynamicTitlePart.set($pageTitle);
-    $: document.title = getFullTitle($dynamicTitlePart);
+    $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
     let calendarRef;
     let calendarApi;
-    let errorMessage = '';
     let allResources = [];
     let selectedResourceId = '';
     let resources = allResources;
@@ -29,50 +29,52 @@
             calendarApi = calendarRef.getAPI();
         }
 
-        if ($user && $user.user.role === 'admin') {
-            try {
-                const response = await fetch(BaseURL + '/admin/getAllUsers', {
-                    credentials: 'include',
-                });
+        if (!$user) {
+            return;
+        }
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                const result = await response.json();
+        let endpoint = $user.user.role === 'admin' ? '/admin/getAllUsers' : '/profile';
+        await fetchUsersData(endpoint);
+    });
+
+    $: {
+        if ($user.user.role === 'admin' && selectedResourceId) {
+            resources = allResources.filter(resource => resource.id === selectedResourceId);
+        } else {
+            resources = allResources;
+        }
+    }
+
+    async function fetchUsersData(endpoint) {
+        try {
+            let response = await fetch(BASE_URL + endpoint, {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const result = await response.json();
+            if ($user.user.role === 'admin') {
                 const transformedData = result.data.map(user => ({
                     id: user.id,
                     title: user.username,
                 }));
                 allResources = transformedData;
-                console.log('first resource:', allResources[0]);
-            } catch (error) {
-                errorMessage = error.message || 'Failed to fetch data';
+            } else if ($user.user.role === 'user') {
+                const resource = {
+                    id: $user.user.id,
+                    title: $user.user.username,
+                };
+                allResources = [...allResources, resource];
             }
-        }
-    });
-
-    $: {
-        if ($user && $user.user.role === 'admin') {
-            if (selectedResourceId) {
-                // @ts-ignore
-                resources = allResources.filter(resource => resource.id === selectedResourceId);
-            } else {
-                resources = allResources;
-            }
-        }
-        if ($user && $user.user.role === 'user') {
-            const resource = {
-                id: $user.user.id,
-                title: $user.user.username,
-            };
-            allResources.push(resource);
-            resources = allResources;
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
     }
 
     function openCreateEventModal(info) {
-        console.log('id:', info.resource.id);
-        console.log('Name', info.resource.title);
         openModal(CreateEventModal, {
             calendar: calendarApi,
             initialResource: {
@@ -120,12 +122,18 @@
         },
         locale: 'da',
         firstDay: 1,
-        editable: true,
-        eventResizableFromStart: true,
-        droppable: true,
-        eventResourceEditable: true,
-        eventDrop: incomingInfo => droppedEvent(incomingInfo, calendarApi),
-        eventResize: incomingInfo => resizedEvent(incomingInfo, calendarApi),
+        // editable: true,
+        // eventResizableFromStart: true,
+        // droppable: true,
+        // eventResourceEditable: true,
+        // eventDrop: incomingInfo => droppedEvent(incomingInfo, calendarApi),
+        // eventResize: incomingInfo => resizedEvent(incomingInfo, calendarApi),
+        editable: $user.user.role === 'admin',
+        eventResizableFromStart: $user.user.role === 'admin',
+        droppable: $user.user.role === 'admin',
+        eventResourceEditable: $user.user.role === 'admin',
+        eventDrop: $user.user.role === 'admin' ? incomingInfo => droppedEvent(incomingInfo, calendarApi) : null,
+        eventResize: $user.user.role === 'admin' ? incomingInfo => resizedEvent(incomingInfo, calendarApi) : null,
         select: openCreateEventModal,
         resources: resources,
         events: getEvents(),
@@ -142,7 +150,7 @@
                 arg.date.getMonth() === currentDate.getMonth() &&
                 arg.date.getDate() === currentDate.getDate()
             ) {
-                arg.el.style.backgroundColor = '#4d4d4d'; // or any color you prefer
+                arg.el.style.backgroundColor = '#4d4d4d';
             }
         },
     };

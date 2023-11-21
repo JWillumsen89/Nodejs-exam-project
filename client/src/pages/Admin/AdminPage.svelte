@@ -1,13 +1,11 @@
 <script>
-    import { BaseURL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../components/Urls.js';
     import { onMount } from 'svelte';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { formatEuropeanDate } from '../../components/dateFormat.js';
 
-    $: pageTitle.set('Admin Panel');
-    $: dynamicTitlePart.set($pageTitle);
-    $: document.title = getFullTitle($dynamicTitlePart);
+    $: pageTitle.set('Admin Panel'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
     let adminData = [];
     let errorMessage = '';
@@ -16,7 +14,7 @@
 
     onMount(async () => {
         try {
-            const response = await fetch(BaseURL + '/admin/data', {
+            const response = await fetch(BASE_URL + '/admin/data', {
                 credentials: 'include',
             });
 
@@ -34,7 +32,7 @@
 
     onMount(async () => {
         try {
-            const response = await fetch(BaseURL + '/admin/users', {
+            const response = await fetch(BASE_URL + '/admin/users', {
                 credentials: 'include',
             });
 
@@ -52,7 +50,6 @@
             errorMessage = error.message || 'Failed to fetch data';
         }
     });
-
 </script>
 
 <div class="content">

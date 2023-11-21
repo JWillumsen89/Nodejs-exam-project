@@ -3,7 +3,7 @@
     import { user } from '../../stores/userStore.js';
     import { get, writable } from 'svelte/store';
     import { notificationStore } from '../../stores/notificationStore.js';
-    import { BaseURL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../components/Urls.js';
 
     export let isOpen;
     export let title;
@@ -44,7 +44,7 @@
         }
 
         try {
-            const response = await fetch(BaseURL + '/auth/change-password', {
+            const response = await fetch(BASE_URL + '/auth/change-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

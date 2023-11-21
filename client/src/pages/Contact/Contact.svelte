@@ -1,14 +1,12 @@
 <script>
-    import { BaseURL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../components/Urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
     import { navigate } from 'svelte-navigator';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { user } from '../../stores/userStore.js';
 
-    $: pageTitle.set('Contact');
-    $: dynamicTitlePart.set($pageTitle);
-    $: document.title = getFullTitle($dynamicTitlePart);
+    $: pageTitle.set('Contact'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
     let username = '';
     let email = '';
@@ -32,7 +30,7 @@
         };
 
         try {
-            const response = await fetch(`${BaseURL}/sendContactEmail`, {
+            const response = await fetch(BASE_URL + '/sendContactEmail', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,26 +62,10 @@
 <div class="form-container">
     <form on:submit={handleContactSubmit}>
         <label for="name">Name:</label>
-        <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            placeholder="Enter full name..."
-            bind:value={username}
-            disabled={isSubmitting || $user.isLoggedIn}
-        />
+        <input type="text" id="name" name="name" required placeholder="Enter full name..." bind:value={username} disabled={isSubmitting || $user.isLoggedIn} />
 
         <label for="email">Email:</label>
-        <input
-            type="email"
-            id="email"
-            name="email"
-            required
-            placeholder="Enter email..."
-            bind:value={email}
-            disabled={isSubmitting || $user.isLoggedIn}
-        />
+        <input type="email" id="email" name="email" required placeholder="Enter email..." bind:value={email} disabled={isSubmitting || $user.isLoggedIn} />
 
         <label for="subject">Subject:</label>
         <input type="text" id="subject" name="subject" required placeholder="Enter subject..." value="Test subject" disabled={isSubmitting} />

@@ -5,7 +5,7 @@
     import { Link } from 'svelte-navigator';
     import { user } from '../../stores/userStore.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
-    import { BaseURL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../components/Urls.js';
     import { useNavigate } from 'svelte-navigator';
     import { notificationStore } from '../../stores/notificationStore.js';
 
@@ -22,7 +22,7 @@
 
     async function handleLogout() {
         try {
-            const response = await fetch(BaseURL + '/auth/logout', {
+            const response = await fetch(BASE_URL + '/auth/logout', {
                 method: 'POST',
                 credentials: 'include',
             });

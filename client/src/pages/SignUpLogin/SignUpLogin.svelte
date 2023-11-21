@@ -1,5 +1,5 @@
 <script>
-    import { BaseURL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../components/Urls.js';
     import { writable, get } from 'svelte/store';
     import { user } from '../../stores/userStore.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
@@ -7,11 +7,7 @@
     import { navigate } from 'svelte-navigator';
     import { notificationStore } from '../../stores/notificationStore.js';
 
-    $: pageTitle.set($isLogin ? 'Login' : 'Sign up');
-
-    $: dynamicTitlePart.set($pageTitle);
-
-    $: document.title = getFullTitle($dynamicTitlePart);
+    $: pageTitle.set($isLogin ? 'Login' : 'Sign up'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
     const isLogin = writable(true);
 
@@ -79,7 +75,7 @@
 
         formEnabledDisabled(true);
         try {
-            const response = await fetch(BaseURL + '/auth/login', {
+            const response = await fetch(BASE_URL + '/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,7 +108,7 @@
 
     async function fetchProfileData() {
         try {
-            const response = await fetch(BaseURL + '/profile', {
+            const response = await fetch(BASE_URL + '/profile', {
                 credentials: 'include',
             });
             if (response.ok) {
@@ -154,7 +150,7 @@
         };
 
         try {
-            const response = await fetch(BaseURL + '/auth/signup', {
+            const response = await fetch(BASE_URL + '/auth/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

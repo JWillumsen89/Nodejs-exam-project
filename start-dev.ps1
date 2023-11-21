@@ -4,8 +4,8 @@ $envPath = ".\server\.env"
 $originalUrlsText = Get-Content $path
 $originalEnvText = Get-Content $envPath
 
-# Change the BaseURL in Urls.js
-$newUrlsText = $originalUrlsText -replace 'export const BaseURL = .*;', 'export const BaseURL = "http://192.168.1.10:3500";'
+# Change the BASE_URL in Urls.js
+$newUrlsText = $originalUrlsText -replace 'export const BASE_URL = .*;', 'export const BASE_URL = "http://192.168.1.10:3500";'
 Set-Content $path $newUrlsText
 
 # Update the port in the server's .env file
