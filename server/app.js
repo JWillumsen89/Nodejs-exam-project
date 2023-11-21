@@ -1,11 +1,9 @@
+import 'dotenv/config';
 import express, { urlencoded } from 'express';
 const app = express();
 
 app.use(express.json());
 app.use(urlencoded({ extended: true }));
-
-import { config } from 'dotenv';
-config();
 
 import cors from 'cors';
 app.use(

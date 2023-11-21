@@ -3,10 +3,10 @@ import mysql from 'mysql2';
 
 // Create a connection pool
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'Bowie2018',
-    database: 'mandatoryii',
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
     waitForConnections: true, // (optional) Set to true if you want to wait for available connections.
     connectionLimit: 10, // (optional) Adjust the number of connections in the pool as needed.
 });
