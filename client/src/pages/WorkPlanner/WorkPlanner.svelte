@@ -12,7 +12,7 @@
     import { BASE_URL } from '../../components/Urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
 
-    import CreateEventModal from './CreateEventModal.svelte';
+    import EventModal from './EventModal.svelte';
 
     $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -96,6 +96,7 @@
                 title: event.title,
                 status: event.status,
                 description: event.description,
+                classNames: `event-${event.status}`,
             }));
             console.log('transformedData', transformedData);
             calendarApi.addEventSource(transformedData);
@@ -104,19 +105,20 @@
         }
     }
 
-    function openCreateEventModal(info) {
+    function openEventModal(info) {
         if (info.resource) {
-            openModal(CreateEventModal, {
+            openModal(EventModal, {
                 initialResource: {
-                    id: info.resource.id,
+                    eventId: info.event.id,
+                    resourceId: info.resource.id,
                     start: info.start,
                     end: info.end,
-                    title: info.resource.title,
+                    status: '',
                 },
                 employees: allResources,
             });
         } else {
-            openModal(CreateEventModal, { initialResource: null, employees: allResources });
+            openModal(EventModal, { initialResource: null, employees: allResources });
         }
     }
 
@@ -198,10 +200,54 @@
         eventResourceEditable: $user.user.role === 'admin',
         eventDrop: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
         eventResize: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
+        eventClick: function (clickInfo) {
+            if ($user.user.role === 'admin') {
+                const event = clickInfo.event;
+                console.log('Extended Props:', event.extendedProps);
+                console.log('Full Event Object:', event);
+                const resourceIds = event._def.resourceIds; // Access resourceIds from _def
+
+                console.log('Event Id:', event.id);
+                const eventData = {
+                    id: event.id,
+                    title: event.title,
+                    start: event.start,
+                    end: event.end,
+                    resourceId: resourceIds && resourceIds.length > 0 ? resourceIds[0] : null, // Check if resourceIds is defined and has elements
+                    description: event.extendedProps.description,
+                    status: event.extendedProps.status,
+                };
+                console.log('eventData', eventData);
+
+                openModal(EventModal, {
+                    initialResource: eventData,
+                    employees: allResources,
+                    isEditMode: true,
+                });
+            }
+        },
         selectable: $user.user.role === 'admin',
-        select: $user.user.role === 'admin' ? openCreateEventModal : null,
+        select: $user.user.role === 'admin' ? openEventModal : null,
         resources: resources,
         events: null,
+        eventContent: function (arg) {
+            const element = document.createElement('div');
+            element.innerText = arg.event.title;
+
+            switch (arg.event.extendedProps.status) {
+                case 'pending':
+                    element.classList.add('event-pending');
+                    break;
+                case 'approved':
+                    element.classList.add('event-approved');
+                    break;
+                case 'denied':
+                    element.classList.add('event-denied');
+                    break;
+            }
+
+            return { domNodes: [element] };
+        },
         slotLabelFormat: getSlotLabelFormat(window.innerWidth),
         resourceAreaHeaderContent: 'Smede:',
         slotDuration: { days: 1 },
@@ -274,7 +320,7 @@
                 <option value={resource.id}>{resource.title}</option>
             {/each}
         </select>
-        <button on:click={() => openCreateEventModal({ resource: null })}>Create Task</button>
+        <button on:click={() => openEventModal({ resource: null })}>Create Event</button>
     </div>
 {/if}
 
@@ -324,7 +370,9 @@
     :global(.fc-event) {
         margin: 10px !important;
         box-sizing: border-box !important;
-        border-radius: 2px !important;
+        border: none !important;
+        padding-left: 10px;
+        border-radius: 6px;
     }
 
     :global(.fc-header-toolbar) {
@@ -397,6 +445,21 @@
 
     :global(.fc .fc-resource-area td) {
         background-color: #3a3a3a !important;
+    }
+
+    :global(.event-pending) {
+        background-color: yellow; /* Color for pending events */
+        color: black; /* Contrasting font color */
+    }
+
+    :global(.event-approved) {
+        background-color: green; /* Color for approved events */
+        color: white; /* Contrasting font color */
+    }
+
+    :global(.event-denied) {
+        background-color: red; /* Color for denied events */
+        color: white; /* Contrasting font color */
     }
 
     .spacer {

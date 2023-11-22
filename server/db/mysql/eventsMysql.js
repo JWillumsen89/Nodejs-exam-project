@@ -20,7 +20,6 @@ export async function getEventsForUser(userId) {
 
 export async function createEvent(event) {
     try {
-        console.log('Are we here??', event);
         const [result] = await pool.execute(`INSERT INTO events (title, start, end, resource_id, status, description) VALUES (?, ?, ?, ?, ?, ?)`, [
             event.title,
             event.start,
@@ -37,7 +36,7 @@ export async function createEvent(event) {
 }
 
 export async function updateEvent(event) {
-    console.log('Are we here in update event???', event);
+    console.log('event: ', event);
     try {
         const [result] = await pool.execute(`UPDATE events SET title = ?, start = ?, end = ?, resource_id = ?, status = ?, description = ? WHERE id = ?`, [
             event.title,

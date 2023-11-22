@@ -7,10 +7,14 @@
 
     export let isOpen;
     export let initialResource;
-
     export let employees;
+    export let isEditMode = false;
+
+    // Add the eventId prop
+    export let eventId;
 
     const eventFormData = writable({
+        id: null,
         title: '',
         startDate: null,
         endDate: null,
@@ -20,18 +24,29 @@
     });
 
     onMount(() => {
+        console.log('initialResource', initialResource);
+        console.log('Employees:', employees);
+
         if (initialResource !== null) {
             const startDate = formatDate(initialResource.start);
             const endDate = new Date(initialResource.end);
             endDate.setDate(endDate.getDate() - 1);
             const formattedEndDate = formatDate(endDate);
 
+            console.log('initialResource ID:', initialResource.resourceId);
+
             eventFormData.set({
                 ...$eventFormData,
+                id: initialResource.id,
+                title: initialResource.title,
+                description: initialResource.description,
+                status: initialResource.status,
                 startDate: startDate,
                 endDate: formattedEndDate,
-                resourceId: parseInt(initialResource.id),
+                resourceId: parseInt(initialResource.resourceId),
             });
+
+            console.log('Set Event FormData:', $eventFormData);
         }
     });
 
@@ -43,10 +58,11 @@
         return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     }
 
-    async function createEvent(event) {
+    async function handleEventSubmission(event) {
         event.preventDefault();
-        const { title, startDate, endDate, resourceId, description, status } = $eventFormData;
+        const { id, title, startDate, endDate, resourceId, description, status } = $eventFormData;
 
+        // Check if all fields are filled
         if (!title || !startDate || !endDate || !resourceId || !description || !status) {
             notificationStore.set({ message: 'Please fill in all fields', type: 'error' });
             return;
@@ -55,46 +71,54 @@
         const endDateTime = new Date(endDate);
         endDateTime.setDate(endDateTime.getDate() + 1);
         const adjustedEndDate = formatDate(endDateTime);
+        const startDateTime = new Date(startDate);
+        const adjustedStartDate = formatDate(startDateTime);
 
-        console.log('All data: ', title, startDate, adjustedEndDate, resourceId, description, status);
+        const eventData = {
+            title,
+            start: adjustedStartDate,
+            end: adjustedEndDate,
+            resourceId,
+            description,
+            status,
+        };
+
+        if (isEditMode) {
+            console.log('Event ID in edit mode:', eventId);
+            eventData.id = id;
+        }
+        console.log('Event Data:', eventData);
+
         try {
-            const response = await fetch(BASE_URL + '/admin/create-event', {
+            const endpoint = isEditMode ? '/admin/update-event' : '/admin/create-event';
+            const response = await fetch(BASE_URL + endpoint, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    title: title,
-                    start: startDate,
-                    end: adjustedEndDate,
-                    resourceId: resourceId,
-                    description: description,
-                    status: status,
-                }),
+                body: JSON.stringify(eventData),
             });
 
             if (!response.ok) {
-                throw new Error('Error creating event ' + response.statusText);
+                throw new Error(`Error ${isEditMode ? 'updating' : 'creating'} event ` + response.statusText);
             }
 
             const data = await response.json();
-            console.log(data);
         } catch (error) {
             notificationStore.set({ message: error.message, type: 'error' });
-            return;
+        } finally {
+            closeModal();
+            notificationStore.set({ message: `Event ${isEditMode ? 'updated' : 'created'} successfully!`, type: 'success' });
         }
-
-        closeModal();
-        notificationStore.set({ message: 'Event successfully created!', type: 'success' });
     }
 </script>
 
 {#if isOpen}
     <div role="dialog" class="modal">
         <div class="contents form-container">
-            <h2>Create Event</h2>
-            <form on:submit={createEvent}>
+            <h2>{isEditMode ? 'Update Event' : 'Create Event'}</h2>
+            <form on:submit={handleEventSubmission}>
                 <div class="form-group">
                     <label for="eventTitle">Event Title:</label>
                     <input id="eventTitle" type="text" bind:value={$eventFormData.title} placeholder="Enter Event Title..." />
@@ -119,21 +143,21 @@
                         <option value="approved">Approved</option>
                         <option value="denied">Denied</option>
                     </select>
-                    <div class="form-group">
-                        <label for="resourceSelect">Resource:</label>
-                        <select id="resourceSelect" bind:value={$eventFormData.resourceId}>
-                            {#if initialResource === null}
-                                <option value={null} disabled>Select Resource</option>
-                            {/if}
-                            {#each employees as employee}
-                                <option value={employee.id}>{employee.title}</option>
-                            {/each}
-                        </select>
-                    </div>
-                    <div class="actions">
-                        <button type="submit">Create Event</button>
-                        <button type="button" on:click={closeModal}>Cancel</button>
-                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="resourceSelect">Resource:</label>
+                    <select id="resourceSelect" bind:value={$eventFormData.resourceId}>
+                        {#if initialResource === null}
+                            <option value={null} disabled>Select Resource</option>
+                        {/if}
+                        {#each employees as employee}
+                            <option value={employee.id}>{employee.title}</option>
+                        {/each}
+                    </select>
+                </div>
+                <div class="actions">
+                    <button type="submit">{isEditMode ? 'Update' : 'Create'} Event</button>
+                    <button type="button" on:click={closeModal}>Cancel</button>
                 </div>
             </form>
         </div>
@@ -156,8 +180,9 @@
     }
 
     .contents {
-        width: 400px;
+        width: 40vw;
         min-width: 250px;
+        max-width: 500px;
         padding: 20px;
         background: #2d2d2d;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -166,6 +191,10 @@
         flex-direction: column;
         pointer-events: auto;
         color: white;
+        @media (max-height: 1200px) {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
     }
 
     h2 {
@@ -236,6 +265,59 @@
     button:disabled {
         background-color: #777;
         cursor: default;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 4px;
+        border: 1px solid #555;
+        background-color: #333;
+        color: #fff;
+        font-size: 14px;
+        line-height: normal;
+        height: calc(1.2em * 20);
+        resize: none;
+    }
+
+    textarea:focus {
+        border-color: #ff9500;
+        outline: none;
+        box-shadow: 0 0 3px #ff9500;
+    }
+
+    textarea:disabled {
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.1));
+        color: #888;
+    }
+
+    select {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 4px;
+        border: 1px solid #555;
+        background-color: #333;
+        color: #fff;
+        font-size: 14px;
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+    }
+
+    select:focus {
+        border-color: #ff9500;
+        outline: none;
+        box-shadow: 0 0 3px #ff9500;
+    }
+
+    select:hover {
+        background-color: #444;
+    }
+
+    select:disabled {
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.1));
+        color: #888;
     }
 
     @media (max-width: 768px) {

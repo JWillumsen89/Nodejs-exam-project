@@ -36,7 +36,7 @@ router.post('/admin/create-event', isAuthenticated, requireRole(['admin']), asyn
 
 router.post('/admin/update-event', isAuthenticated, requireRole(['admin']), async (req, res) => {
     try {
-        console.log(req.body);
+        console.log('Update req.body', req.body);
         const event = await authorizationController.updateEvent(req.body);
         res.send({ data: { message: 'Event updated successfully', event: event } });
     } catch (error) {
