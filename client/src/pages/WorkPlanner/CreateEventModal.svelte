@@ -6,7 +6,6 @@
     import { BASE_URL } from '../../components/Urls.js';
 
     export let isOpen;
-    export let calendar;
     export let initialResource;
 
     export let employees;
@@ -21,22 +20,24 @@
     });
 
     onMount(() => {
-        const startDate = formatDate(initialResource.start);
+        if (initialResource !== null) {
+            const startDate = formatDate(initialResource.start);
+            const endDate = new Date(initialResource.end);
+            endDate.setDate(endDate.getDate() - 1);
+            const formattedEndDate = formatDate(endDate);
 
-        const endDate = new Date(initialResource.end);
-        endDate.setDate(endDate.getDate() - 1);
-        const formattedEndDate = formatDate(endDate);
-
-        eventFormData.set({
-            title: '',
-            startDate: startDate,
-            endDate: formattedEndDate,
-            resourceId: parseInt(initialResource.id),
-            description: '',
-            status: '',
-        });
-        console.log('initialResource:', initialResource);
+            eventFormData.set({
+                ...$eventFormData,
+                startDate: startDate,
+                endDate: formattedEndDate,
+                resourceId: parseInt(initialResource.id),
+            });
+        }
     });
+
+    $: if ($eventFormData.startDate && new Date($eventFormData.endDate) < new Date($eventFormData.startDate)) {
+        $eventFormData.endDate = $eventFormData.startDate;
+    }
 
     function formatDate(date) {
         return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
@@ -96,23 +97,24 @@
             <form on:submit={createEvent}>
                 <div class="form-group">
                     <label for="eventTitle">Event Title:</label>
-                    <input id="eventTitle" type="text" bind:value={$eventFormData.title} placeholder="Event Title" />
+                    <input id="eventTitle" type="text" bind:value={$eventFormData.title} placeholder="Enter Event Title..." />
                 </div>
                 <div class="form-group">
                     <label for="startDate">Start Date:</label>
-                    <input id="startDate" type="date" bind:value={$eventFormData.startDate} />
+                    <input id="startDate" type="date" max={$eventFormData.endDate} bind:value={$eventFormData.startDate} />
                 </div>
                 <div class="form-group">
                     <label for="endDate">End Date:</label>
-                    <input id="endDate" type="date" bind:value={$eventFormData.endDate} />
+                    <input id="endDate" type="date" min={$eventFormData.startDate} bind:value={$eventFormData.endDate} />
                 </div>
                 <div class="form-group">
                     <label for="description">Description:</label>
-                    <textarea id="description" bind:value={$eventFormData.description} placeholder="Description" />
+                    <textarea id="description" bind:value={$eventFormData.description} placeholder="Enter Description..." />
                 </div>
                 <div class="form-group">
                     <label for="status">Status:</label>
                     <select id="status" bind:value={$eventFormData.status}>
+                        <option value={''} disabled>Select Status</option>
                         <option value="pending">Pending</option>
                         <option value="approved">Approved</option>
                         <option value="denied">Denied</option>
@@ -120,6 +122,9 @@
                     <div class="form-group">
                         <label for="resourceSelect">Resource:</label>
                         <select id="resourceSelect" bind:value={$eventFormData.resourceId}>
+                            {#if initialResource === null}
+                                <option value={null} disabled>Select Resource</option>
+                            {/if}
                             {#each employees as employee}
                                 <option value={employee.id}>{employee.title}</option>
                             {/each}
@@ -136,12 +141,6 @@
 {/if}
 
 <style>
-    #calendar {
-        max-width: 100%;
-        margin: 0 auto;
-        height: 85vh;
-        background-color: #ffffff;
-    }
     .modal {
         position: fixed;
         top: 0;

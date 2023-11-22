@@ -105,16 +105,19 @@
     }
 
     function openCreateEventModal(info) {
-        openModal(CreateEventModal, {
-            calendar: calendarApi,
-            initialResource: {
-                id: info.resource.id,
-                start: info.start,
-                end: info.end,
-                title: info.resource.title,
-            },
-            employees: allResources,
-        });
+        if (info.resource) {
+            openModal(CreateEventModal, {
+                initialResource: {
+                    id: info.resource.id,
+                    start: info.start,
+                    end: info.end,
+                    title: info.resource.title,
+                },
+                employees: allResources,
+            });
+        } else {
+            openModal(CreateEventModal, { initialResource: null, employees: allResources });
+        }
     }
 
     function formatDate(date) {
@@ -264,13 +267,14 @@
 </Modals>
 
 {#if $user.user.role === 'admin'}
-    <div>
+    <div class="header-controls">
         <select bind:value={selectedResourceId}>
             <option value="">All Resources</option>
             {#each allResources as resource}
                 <option value={resource.id}>{resource.title}</option>
             {/each}
         </select>
+        <button on:click={() => openCreateEventModal({ resource: null })}>Create Task</button>
     </div>
 {/if}
 
@@ -419,6 +423,7 @@
         margin-bottom: 10px;
         width: 30%;
         box-sizing: border-box;
+        margin-right: 10px;
     }
 
     select:hover {
@@ -428,5 +433,18 @@
     select:focus {
         box-shadow: 0 0 3px #ff9500;
         outline: none;
+    }
+    button {
+        padding: 10px 20px;
+        background-color: #ff9500;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #cc7a00;
     }
 </style>
