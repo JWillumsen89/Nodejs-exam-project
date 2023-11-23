@@ -62,7 +62,6 @@
         event.preventDefault();
         const { id, title, startDate, endDate, resourceId, description, status } = $eventFormData;
 
-        // Check if all fields are filled
         if (!title || !startDate || !endDate || !resourceId || !description || !status) {
             notificationStore.set({ message: 'Please fill in all fields', type: 'error' });
             return;

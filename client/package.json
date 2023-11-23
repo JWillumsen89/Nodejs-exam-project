@@ -37,6 +37,7 @@
     "@fullcalendar/resource": "^6.1.9",
     "@fullcalendar/resource-timeline": "^6.1.9",
     "faker": "^5.5.3",
+    "socket.io-client": "^4.7.2",
     "svelte-french-toast": "^1.2.0",
     "svelte-fullcalendar": "^3.0.0",
     "svelte-gantt": "^4.2.1",

@@ -4,6 +4,8 @@
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { formatEuropeanDate } from '../../components/dateFormat.js';
+    import io from 'socket.io-client';
+    const socket = io('http://localhost:3000');
 
     $: pageTitle.set('Admin Panel'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -28,9 +30,19 @@
             console.error('Fetch error:', error);
             errorMessage = error.message || 'Failed to fetch data';
         }
+
+        await fetchAllUsersWithUserRole();
     });
 
-    onMount(async () => {
+    socket.on('user_signup', async () => {
+        await fetchAllUsersWithUserRole();
+    });
+
+    socket.on('user_updated', async () => {
+        await fetchAllUsersWithUserRole();
+    });
+
+    async function fetchAllUsersWithUserRole() {
         try {
             const response = await fetch(BASE_URL + '/admin/users', {
                 credentials: 'include',
@@ -49,7 +61,7 @@
             console.error('Fetch error:', error);
             errorMessage = error.message || 'Failed to fetch data';
         }
-    });
+    }
 </script>
 
 <div class="content">

@@ -23,6 +23,17 @@ app.use(
     })
 );
 
+import http from 'http';
+const server = http.createServer(app);
+
+import { Server } from 'socket.io';
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['*'],
+    },
+});
+
 import { rateLimit } from 'express-rate-limit';
 
 const allRoutesLimiter = rateLimit({
@@ -35,13 +46,13 @@ const allRoutesLimiter = rateLimit({
 app.use(allRoutesLimiter);
 
 import authRouter from './authentication/routers/authRouter.js';
-app.use(authRouter);
+app.use(authRouter(io));
 
 import userRoleRouter from './authorization/routers/userRoleRouter.js';
-app.use(userRoleRouter);
+app.use(userRoleRouter(io));
 
 import adminRoleRouter from './authorization/routers/adminRoleRouter.js';
-app.use(adminRoleRouter);
+app.use(adminRoleRouter(io));
 
 import emailSenderRouter from './emailSender/routers/emailSenderRouter.js';
 app.use(emailSenderRouter);
@@ -56,6 +67,6 @@ app.all('*', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port`, PORT);
 });

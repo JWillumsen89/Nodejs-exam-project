@@ -1,6 +1,8 @@
 <script>
     // @ts-nocheck
 
+    import io from 'socket.io-client';
+    const socket = io('http://localhost:3000');
     import FullCalendar from 'svelte-fullcalendar';
     import interactionPlugin from '@fullcalendar/interaction';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
@@ -18,6 +20,7 @@
 
     let calendarRef;
     let calendarApi;
+    let allEvents = [];
     let allResources = [];
     let selectedResourceId = '';
     let resources;
@@ -36,6 +39,30 @@
         let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
         console.log('endpointEventsData', BASE_URL + endpointEventsData);
         await fetchEventsData(endpointEventsData);
+    });
+
+    //with socket the resources and events should update as soon as a new user is created
+    socket.on('user_signup', async () => {
+        if ($user.user.role === 'admin') {
+            await fetchUsersData('/admin/get-all-users');
+            await fetchEventsData('/admin/get-all-events');
+        }
+    });
+
+    socket.on('event_created', async () => {
+        if ($user.user.role === 'admin') {
+            await fetchEventsData('/admin/get-all-events');
+        } else if ($user.user.role === 'user') {
+            await fetchEventsData('/user/get-events');
+        }
+    });
+
+    socket.on('event_updated', async () => {
+        if ($user.user.role === 'admin') {
+            await fetchEventsData('/admin/get-all-events');
+        } else if ($user.user.role === 'user') {
+            await fetchEventsData('/user/get-events');
+        }
     });
 
     $: {
@@ -62,6 +89,9 @@
                     id: user.id,
                     title: user.username,
                 }));
+                //Sort by title
+                transformedData.sort((a, b) => (a.title > b.title ? 1 : -1));
+
                 allResources = transformedData;
             } else if ($user.user.role === 'user') {
                 const resource = {
@@ -99,27 +129,31 @@
                 classNames: `event-${event.status}`,
             }));
             console.log('transformedData', transformedData);
-            calendarApi.addEventSource(transformedData);
+            allEvents = transformedData;
+            console.log('allEvents', allEvents);
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
     }
 
     function openEventModal(info) {
-        if (info.resource) {
-            openModal(EventModal, {
-                initialResource: {
-                    eventId: info.event.id,
-                    resourceId: info.resource.id,
-                    start: info.start,
-                    end: info.end,
-                    status: '',
-                },
-                employees: allResources,
-            });
-        } else {
-            openModal(EventModal, { initialResource: null, employees: allResources });
+        console.log('info event', info);
+
+        let modalProps = {
+            initialResource: {
+                resourceId: info.resource ? info.resource.id : null,
+                start: info.start,
+                end: info.end,
+                status: '',
+            },
+            employees: allResources,
+        };
+
+        if (info.event && info.event.id) {
+            modalProps.initialResource.eventId = info.event.id;
         }
+
+        openModal(EventModal, modalProps);
     }
 
     function formatDate(date) {
@@ -205,7 +239,7 @@
                 const event = clickInfo.event;
                 console.log('Extended Props:', event.extendedProps);
                 console.log('Full Event Object:', event);
-                const resourceIds = event._def.resourceIds; // Access resourceIds from _def
+                const resourceIds = event._def.resourceIds;
 
                 console.log('Event Id:', event.id);
                 const eventData = {
@@ -213,7 +247,7 @@
                     title: event.title,
                     start: event.start,
                     end: event.end,
-                    resourceId: resourceIds && resourceIds.length > 0 ? resourceIds[0] : null, // Check if resourceIds is defined and has elements
+                    resourceId: resourceIds && resourceIds.length > 0 ? resourceIds[0] : null,
                     description: event.extendedProps.description,
                     status: event.extendedProps.status,
                 };
@@ -229,7 +263,8 @@
         selectable: $user.user.role === 'admin',
         select: $user.user.role === 'admin' ? openEventModal : null,
         resources: resources,
-        events: null,
+        resourceOrder: 'title',
+        events: allEvents,
         eventContent: function (arg) {
             const element = document.createElement('div');
             element.innerText = arg.event.title;
