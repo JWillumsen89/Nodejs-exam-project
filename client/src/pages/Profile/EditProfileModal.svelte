@@ -43,7 +43,7 @@
         };
 
         try {
-            const response = await fetch(BASE_URL + '/auth/edit-profile', {
+            const response = await fetch(BASE_URL + '/authorization/edit-profile', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

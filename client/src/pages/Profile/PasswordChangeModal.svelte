@@ -44,7 +44,7 @@
         }
 
         try {
-            const response = await fetch(BASE_URL + '/auth/change-password', {
+            const response = await fetch(BASE_URL + '/authorization/change-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

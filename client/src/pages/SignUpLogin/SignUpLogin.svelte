@@ -194,7 +194,7 @@
         {/if}
 
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required value="Jonathan123"/>
+        <input type="password" id="password" name="password" required value="Bowie2018"/>
 
         {#if !$isLogin}
             <label for="passwordConfirmation">Confirm Password:</label>

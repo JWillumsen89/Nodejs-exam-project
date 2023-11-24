@@ -41,7 +41,6 @@
         await fetchEventsData(endpointEventsData);
     });
 
-    //with socket the resources and events should update as soon as a new user is created
     socket.on('user_signup', async () => {
         if ($user.user.role === 'admin') {
             await fetchUsersData('/admin/get-all-users');

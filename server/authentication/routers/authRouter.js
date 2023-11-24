@@ -39,26 +39,7 @@ export default function (io) {
         });
     });
 
-    router.post('/auth/change-password', authRateLimiter, async (req, res) => {
-        try {
-            await authController.checkAndChangePassword(req.body);
-            res.send({ data: { message: 'Password changed successfully' } });
-        } catch (error) {
-            res.status(400).send({ error: error.message });
-        }
-    });
-
-    router.post('/auth/edit-profile', authRateLimiter, async (req, res) => {
-        try {
-            const updatedUserData = await authController.editProfile(req.body);
-            req.session.user = updatedUserData;
-            console.log('Updated user', updatedUserData);
-            io.emit('user_updated', { user: updatedUserData });
-            res.send({ data: { message: 'Profile edited successfully', user: updatedUserData } });
-        } catch (error) {
-            res.status(400).send({ error: error.message });
-        }
-    });
+    
 
     return router;
 }

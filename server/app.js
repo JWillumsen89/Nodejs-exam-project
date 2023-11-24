@@ -48,6 +48,9 @@ app.use(allRoutesLimiter);
 import authRouter from './authentication/routers/authRouter.js';
 app.use(authRouter(io));
 
+import authorizationRouter from './authorization/routers/authorizationRouter.js';
+app.use(authorizationRouter(io));
+
 import userRoleRouter from './authorization/routers/userRoleRouter.js';
 app.use(userRoleRouter(io));
 

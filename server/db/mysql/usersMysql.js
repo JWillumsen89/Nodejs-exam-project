@@ -1,12 +1,6 @@
 import pool from './mysqlConnection.js';
 import { hashPassword, comparePassword, isValidPassword } from '../../utils/password.js';
 
-//let user = await createUser('CHRISTIAN', 'CHRISTIAN@test.dk', 'Bowie2018');
-//let user = await checkAndChangePassword('Jhon1989', 'Jonathan123', 'Bowie2018');
-//let user = await loginUser('Jhon', 'Jonathan123');
-//let user = await editProfile('Jhon', 'Jhon1989', 'Tesqwet@test.dk', 'willumsenjonathan@gmail.com');
-//console.log('User: ', user);
-
 export async function createUser(username, email, password, role = 'user') {
     username = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase().replace(/\s/g, '');
     email = email.charAt(0).toUpperCase() + email.slice(1).toLowerCase();
@@ -14,7 +8,10 @@ export async function createUser(username, email, password, role = 'user') {
     try {
         if (isValidPassword(password)) {
             console.log('Password is valid.');
+        } else {
+            throw new Error('Password is not valid');
         }
+        
     } catch (error) {
         throw new Error(error.message);
     }
@@ -41,7 +38,6 @@ export async function createUser(username, email, password, role = 'user') {
             createdAt,
             updatedAt,
         ]);
-        console.log('result: ', result);
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
             if (error.sqlMessage.includes('users.username_UNIQUE')) {
@@ -84,10 +80,9 @@ export async function loginUser(loginInput, password) {
     return userWithoutPassword;
 }
 
-export async function checkAndChangePassword(username, oldPassword, newPassword) {
-    username = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase().replace(/\s/g, '');
-
-    const [result] = await pool.execute(`SELECT * FROM users WHERE username = ?`, [username]);
+export async function checkAndChangePassword(oldPassword, newPassword, sessionUserId) {
+    // Fetch user based on sessionUserId
+    const [result] = await pool.execute(`SELECT * FROM users WHERE id = ?`, [sessionUserId]);
 
     if (result.length === 0) {
         throw new Error('User not found');
@@ -95,26 +90,29 @@ export async function checkAndChangePassword(username, oldPassword, newPassword)
 
     const user = result[0];
 
+    // Check if the old password is correct
     const isPasswordCorrect = await comparePassword(oldPassword, user.password);
 
     if (!isPasswordCorrect) {
         throw new Error('Wrong password');
     }
 
+    // Validate the new password
     if (!isValidPassword(newPassword)) {
         throw new Error('Password is not valid');
     }
 
+    // Hash the new password
     const hashedPassword = await hashPassword(newPassword);
 
-    const [updateResult] = await pool.execute(`UPDATE users SET password = ?, updatedAt = Now() WHERE username = ?`, [hashedPassword, username]);
+    // Update password in the database
+    const [updateResult] = await pool.execute(`UPDATE users SET password = ?, updatedAt = NOW() WHERE id = ?`, [hashedPassword, sessionUserId]);
 
     if (updateResult.affectedRows === 0) {
         throw new Error('Could not update password');
     }
 
-    //return user without password
-
+    // Return user data without the password
     const { password: _, ...userWithoutPassword } = user;
 
     return userWithoutPassword;
@@ -130,7 +128,7 @@ export async function getAllUsers() {
     return result;
 }
 
-export async function editProfile(oldUsername, newUsername, oldEmail, newEmail) {
+export async function editProfile(oldUsername, newUsername, oldEmail, newEmail, sessionUserId) {
     newUsername = newUsername.charAt(0).toUpperCase() + newUsername.slice(1).toLowerCase().replace(/\s/g, '');
     newEmail = newEmail.charAt(0).toUpperCase() + newEmail.slice(1).toLowerCase();
 
@@ -147,6 +145,12 @@ export async function editProfile(oldUsername, newUsername, oldEmail, newEmail) 
                 throw new Error('Email already exists');
             }
         });
+    }
+
+    // Get the user with oldUsername or oldEmail
+    const [currentUser] = await pool.query('SELECT id FROM users WHERE username = ? OR email = ?', [oldUsername, oldEmail]);
+    if (currentUser.length === 0 || currentUser[0].id !== sessionUserId) {
+        throw new Error('Unauthorized to edit this profile');
     }
 
     // Update user's profile

@@ -1,4 +1,4 @@
-import { createUser, loginUser, checkAndChangePassword, editProfile } from '../../db/mysql/usersMysql.js';
+import { createUser, loginUser} from '../../db/mysql/usersMysql.js';
 
 export const authService = {
     async signUpUser(userData) {
@@ -10,10 +10,5 @@ export const authService = {
         return user;
     },
 
-    async checkAndChangePassword(userData) {
-        await checkAndChangePassword(userData.username, userData.currentPassword, userData.newPassword);
-    },
-    async editProfile(userData) {
-        return await editProfile(userData.oldUsername, userData.newUsername, userData.oldEmail, userData.newEmail);
-    }
+    
 };

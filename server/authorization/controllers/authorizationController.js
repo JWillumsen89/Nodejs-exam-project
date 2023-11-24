@@ -25,5 +25,11 @@ export const authorizationController = {
     async updateEvent(event) {
         const updatedEvent = await authorizationService.updateEvent(event);
         return updatedEvent;
+    },
+    async checkAndChangePassword(body, sessionUserId) {
+        return await authorizationService.checkAndChangePassword(body, sessionUserId);
+    },
+    async editProfile(body, sessionUserId) {
+        return await authorizationService.editProfile(body, sessionUserId);
     }
 };

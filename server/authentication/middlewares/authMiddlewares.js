@@ -8,9 +8,6 @@ export const authRateLimiter = rateLimit({
 });
 
 export function isAuthenticated(req, res, next) {
-    console.log('Checking if user is authenticated');
-    console.log('Session', req.session);
-    console.log('Session user', req.session.user);
     if (req.session && req.session.user) {
         console.log('User is authenticated');
         return next();

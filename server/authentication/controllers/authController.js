@@ -9,10 +9,5 @@ export const authController = {
         const user = await authService.loginUser(req, body);
         return user;
     },
-    async checkAndChangePassword(body) {
-        await authService.checkAndChangePassword(body);
-    },
-    async editProfile(body) {
-        return await authService.editProfile(body);
-    }
+    
 };

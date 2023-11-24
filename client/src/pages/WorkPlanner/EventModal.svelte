@@ -27,27 +27,23 @@
         console.log('initialResource', initialResource);
         console.log('Employees:', employees);
 
-        if (initialResource !== null) {
-            const startDate = formatDate(initialResource.start);
-            const endDate = new Date(initialResource.end);
-            endDate.setDate(endDate.getDate() - 1);
-            const formattedEndDate = formatDate(endDate);
+        const today = new Date();
+        const defaultStartDate = formatDate(today);
+        const defaultEndDate = formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)); // Default to tomorrow
 
-            console.log('initialResource ID:', initialResource.resourceId);
+        const startDate = initialResource && initialResource.start ? formatDate(new Date(initialResource.start)) : defaultStartDate;
+        const endDate = initialResource && initialResource.end ? formatDate(new Date(initialResource.end)) : defaultEndDate;
 
-            eventFormData.set({
-                ...$eventFormData,
-                id: initialResource.id,
-                title: initialResource.title,
-                description: initialResource.description,
-                status: initialResource.status,
-                startDate: startDate,
-                endDate: formattedEndDate,
-                resourceId: parseInt(initialResource.resourceId),
-            });
-
-            console.log('Set Event FormData:', $eventFormData);
-        }
+        eventFormData.set({
+            ...$eventFormData,
+            id: initialResource && initialResource.id ? initialResource.id : null,
+            title: initialResource && initialResource.title ? initialResource.title : '',
+            description: initialResource && initialResource.description ? initialResource.description : '',
+            status: initialResource && initialResource.status ? initialResource.status : '',
+            startDate: startDate,
+            endDate: endDate,
+            resourceId: initialResource && initialResource.resourceId ? parseInt(initialResource.resourceId) : null,
+        });
     });
 
     $: if ($eventFormData.startDate && new Date($eventFormData.endDate) < new Date($eventFormData.startDate)) {
