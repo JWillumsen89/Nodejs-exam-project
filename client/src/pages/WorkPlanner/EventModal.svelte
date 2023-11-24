@@ -4,14 +4,20 @@
     import { writable } from 'svelte/store';
     import { onMount } from 'svelte';
     import { BASE_URL } from '../../components/Urls.js';
+    import { user } from '../../stores/userStore.js';
 
     export let isOpen;
     export let initialResource;
     export let employees;
     export let isEditMode = false;
-
-    // Add the eventId prop
     export let eventId;
+
+    let isUser = false; // Initialize isUser to false by default
+
+    // Check if the user's role is 'user' and set isUser accordingly
+    if ($user.user.role === 'user') {
+        isUser = true;
+    }
 
     const eventFormData = writable({
         id: null,
@@ -85,7 +91,7 @@
         console.log('Event Data:', eventData);
 
         try {
-            const endpoint = isEditMode ? '/admin/update-event' : '/admin/create-event';
+            const endpoint = isEditMode ? '/user/update-event' : '/admin/create-event';
             const response = await fetch(BASE_URL + endpoint, {
                 method: 'POST',
                 credentials: 'include',
@@ -116,15 +122,15 @@
             <form on:submit={handleEventSubmission}>
                 <div class="form-group">
                     <label for="eventTitle">Event Title:</label>
-                    <input id="eventTitle" type="text" bind:value={$eventFormData.title} placeholder="Enter Event Title..." />
+                    <input id="eventTitle" type="text" bind:value={$eventFormData.title} placeholder="Enter Event Title..." disabled={isUser} />
                 </div>
                 <div class="form-group">
                     <label for="startDate">Start Date:</label>
-                    <input id="startDate" type="date" max={$eventFormData.endDate} bind:value={$eventFormData.startDate} />
+                    <input id="startDate" type="date" max={$eventFormData.endDate} bind:value={$eventFormData.startDate} disabled={isUser} />
                 </div>
                 <div class="form-group">
                     <label for="endDate">End Date:</label>
-                    <input id="endDate" type="date" min={$eventFormData.startDate} bind:value={$eventFormData.endDate} />
+                    <input id="endDate" type="date" min={$eventFormData.startDate} bind:value={$eventFormData.endDate} disabled={isUser} />
                 </div>
                 <div class="form-group">
                     <label for="description">Description:</label>
@@ -141,7 +147,7 @@
                 </div>
                 <div class="form-group">
                     <label for="resourceSelect">Resource:</label>
-                    <select id="resourceSelect" bind:value={$eventFormData.resourceId}>
+                    <select id="resourceSelect" bind:value={$eventFormData.resourceId} disabled={isUser} >
                         {#if initialResource === null}
                             <option value={null} disabled>Select Resource</option>
                         {/if}
@@ -179,6 +185,7 @@
         min-width: 250px;
         max-width: 500px;
         padding: 20px;
+        padding-top: 10px;
         background: #2d2d2d;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         border-radius: 8px;

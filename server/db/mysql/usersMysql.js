@@ -119,12 +119,12 @@ export async function checkAndChangePassword(oldPassword, newPassword, sessionUs
 }
 
 export async function getAllUsersWithUserRole() {
-    const [result] = await pool.execute(`SELECT * FROM users WHERE role = 'user'`);
+    const [result] = await pool.execute(`SELECT id, username, email, role, createdAt, updatedAt FROM users WHERE role = 'user'`);
     return result;
 }
 
 export async function getAllUsers() {
-    const [result] = await pool.execute(`SELECT * FROM users`);
+    const [result] = await pool.execute(`SELECT id, username, email, role, createdAt, updatedAt FROM users`);
     return result;
 }
 

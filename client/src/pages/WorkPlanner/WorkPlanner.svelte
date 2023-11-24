@@ -234,30 +234,28 @@
         eventDrop: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
         eventResize: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
         eventClick: function (clickInfo) {
-            if ($user.user.role === 'admin') {
-                const event = clickInfo.event;
-                console.log('Extended Props:', event.extendedProps);
-                console.log('Full Event Object:', event);
-                const resourceIds = event._def.resourceIds;
+            const event = clickInfo.event;
+            console.log('Extended Props:', event.extendedProps);
+            console.log('Full Event Object:', event);
+            const resourceIds = event._def.resourceIds;
 
-                console.log('Event Id:', event.id);
-                const eventData = {
-                    id: event.id,
-                    title: event.title,
-                    start: event.start,
-                    end: event.end,
-                    resourceId: resourceIds && resourceIds.length > 0 ? resourceIds[0] : null,
-                    description: event.extendedProps.description,
-                    status: event.extendedProps.status,
-                };
-                console.log('eventData', eventData);
+            console.log('Event Id:', event.id);
+            const eventData = {
+                id: event.id,
+                title: event.title,
+                start: event.start,
+                end: event.end,
+                resourceId: resourceIds && resourceIds.length > 0 ? resourceIds[0] : null,
+                description: event.extendedProps.description,
+                status: event.extendedProps.status,
+            };
+            console.log('eventData', eventData);
 
-                openModal(EventModal, {
-                    initialResource: eventData,
-                    employees: allResources,
-                    isEditMode: true,
-                });
-            }
+            openModal(EventModal, {
+                initialResource: eventData,
+                employees: allResources,
+                isEditMode: true,
+            });
         },
         selectable: $user.user.role === 'admin',
         select: $user.user.role === 'admin' ? openEventModal : null,
@@ -374,7 +372,15 @@
 
     :global(.fc-scroller) {
         height: calc(100% - 30px) !important;
-        overflow-y: auto !important;
+    }
+
+    :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr) {
+        border-bottom: 5px solid #6c6c6c !important; /* Change border thickness as needed */
+    }
+
+    :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr:not(.fc-col-header-row):nth-child(odd)) {
+        background-color: #212121 !important;
+        border-bottom: 5px solid #6c6c6c !important; /* Change border thickness as needed */
     }
 
     :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr:last-child) {

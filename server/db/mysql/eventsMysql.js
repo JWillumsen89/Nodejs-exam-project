@@ -30,13 +30,11 @@ export async function createEvent(event) {
         ]);
         return result;
     } catch (error) {
-        console.log('Error message: ', error.message);
         throw error;
     }
 }
 
 export async function updateEvent(event) {
-    console.log('event: ', event);
     try {
         const [result] = await pool.execute(`UPDATE events SET title = ?, start = ?, end = ?, resource_id = ?, status = ?, description = ? WHERE id = ?`, [
             event.title,
@@ -49,7 +47,6 @@ export async function updateEvent(event) {
         ]);
         return result;
     } catch (error) {
-        console.log('Error message: ', error.message);
         throw error;
     }
 }
