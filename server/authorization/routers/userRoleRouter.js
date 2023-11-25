@@ -17,7 +17,6 @@ export default function (io) {
 
     router.post('/user/update-event', isAuthenticated, requireRole(['user']), async (req, res) => {
         try {
-            console.log('Update req.body', req.body);
             const event = await authorizationController.updateEvent(req.body);
             io.emit('event_updated', { event: event });
             res.send({ data: { message: 'Event updated successfully', event: event } });

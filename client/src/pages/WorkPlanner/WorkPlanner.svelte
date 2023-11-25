@@ -6,6 +6,7 @@
     import FullCalendar from 'svelte-fullcalendar';
     import interactionPlugin from '@fullcalendar/interaction';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
+    import Select from 'svelte-select';
     import { Modals, openModal, closeModal } from 'svelte-modals';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
@@ -24,6 +25,7 @@
     let allResources = [];
     let selectedResourceId = '';
     let resources;
+    let selectedResourceIds = [];
 
     onMount(async () => {
         if (calendarRef) {
@@ -37,9 +39,14 @@
         let endpointUsersData = $user.user.role === 'admin' ? '/admin/get-all-users' : '/user/profile';
         await fetchUsersData(endpointUsersData);
         let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
-        console.log('endpointEventsData', BASE_URL + endpointEventsData);
+  
         await fetchEventsData(endpointEventsData);
     });
+
+    $: selectOptions = allResources.map(resource => ({
+        value: resource.id,
+        label: resource.title,
+    }));
 
     socket.on('user_signup', async () => {
         if ($user.user.role === 'admin') {
@@ -65,9 +72,20 @@
     });
 
     $: {
-        if ($user.user.role === 'admin' && selectedResourceId) {
-            resources = allResources.filter(resource => resource.id === selectedResourceId);
+        // Check if the user is an admin and selectedResourceIds is defined and not empty
+        if ($user.user.role === 'admin' && Array.isArray(selectedResourceIds) && selectedResourceIds.length > 0) {
+            // Convert selectedResourceIds values to integers, assuming they are objects with a 'value' property
+            let manipulatedSelectedResourceIds = selectedResourceIds.map(id => parseInt(id.value));
+
+            // Check if the manipulated array includes an empty string
+            if (manipulatedSelectedResourceIds.includes('')) {
+                resources = allResources;
+            } else {
+                // Filter resources based on the IDs in manipulatedSelectedResourceIds
+                resources = allResources.filter(resource => manipulatedSelectedResourceIds.includes(resource.id));
+            }
         } else {
+            // Default to all resources if the user is not an admin or selectedResourceIds is empty or undefined
             resources = allResources;
         }
     }
@@ -116,7 +134,6 @@
             }
 
             const result = await response.json();
-            console.log('Events result.data', result.data);
             const transformedData = result.data.map(event => ({
                 id: event.id,
                 resourceId: event.resource_id,
@@ -125,19 +142,16 @@
                 title: event.title,
                 status: event.status,
                 description: event.description,
+                appraised: event.appraised,
                 classNames: `event-${event.status}`,
             }));
-            console.log('transformedData', transformedData);
             allEvents = transformedData;
-            console.log('allEvents', allEvents);
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
     }
 
     function openEventModal(info) {
-        console.log('info event', info);
-
         let modalProps = {
             initialResource: {
                 resourceId: info.resource ? info.resource.id : null,
@@ -170,11 +184,11 @@
             resourceId: event.getResources().map(resource => resource.id)[0],
             description: event.extendedProps.description,
             status: event.extendedProps.status,
+            appraised: event.extendedProps.appraised,
         };
-        console.log('updatedEvent', updatedEvent);
 
         try {
-            const response = await fetch(BASE_URL + '/admin/update-event', {
+            const response = await fetch(BASE_URL + '/user/update-event', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -235,11 +249,8 @@
         eventResize: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
         eventClick: function (clickInfo) {
             const event = clickInfo.event;
-            console.log('Extended Props:', event.extendedProps);
-            console.log('Full Event Object:', event);
             const resourceIds = event._def.resourceIds;
 
-            console.log('Event Id:', event.id);
             const eventData = {
                 id: event.id,
                 title: event.title,
@@ -248,8 +259,8 @@
                 resourceId: resourceIds && resourceIds.length > 0 ? resourceIds[0] : null,
                 description: event.extendedProps.description,
                 status: event.extendedProps.status,
+                appraised: event.extendedProps.appraised,
             };
-            console.log('eventData', eventData);
 
             openModal(EventModal, {
                 initialResource: eventData,
@@ -276,6 +287,10 @@
                 case 'denied':
                     element.classList.add('event-denied');
                     break;
+            }
+            if (arg.event.extendedProps.appraised === 1) {
+                const iconHTML = '<span class="event-icon"> ✔️</span>';
+                element.innerHTML += iconHTML;
             }
 
             return { domNodes: [element] };
@@ -329,6 +344,10 @@
             closeModal();
         }
     }
+
+    function clearSelections() {
+        selectedResourceIds = [];
+    }
 </script>
 
 <div class="spacer" />
@@ -343,16 +362,41 @@
         aria-label="Close modal"
     />
 </Modals>
-
 {#if $user.user.role === 'admin'}
     <div class="header-controls">
-        <select bind:value={selectedResourceId}>
-            <option value="">All Resources</option>
-            {#each allResources as resource}
-                <option value={resource.id}>{resource.title}</option>
-            {/each}
-        </select>
-        <button on:click={() => openEventModal({ resource: null })}>Create Event</button>
+        <div class="select-and-clear">
+            <Select
+                items={selectOptions}
+                bind:value={selectedResourceIds}
+                placeholder="All Resources"
+                showChevron={true}
+                clearable={false}
+                multiple
+                --chevron-icon-width="20px"
+                --chevron-icon-colour="white"
+                --background="#ff9500"
+                --border="1px solid #6c6c6c"
+                --border-radius="4px"
+                --box-sizing="border-box"
+                --item-height="38px"
+                --item-hover-bg="#ff9500"
+                --item-hover-color="#fff"
+                --list-background="#3a3a3a"
+                --list-border="1px solid #6c6c6c"
+                --list-border-radius="4px"
+                --list-max-height="200px"
+                --placeholder-color="#fff"
+                --clear-icon-color="#ff9500"
+                --multi-item-bg="#2d2d2d"
+                --multi-item-color="#fff"
+                --multi-item-border-radius="4px"
+                --multi-item-clear-icon-color="#ff9500"
+                --border-focused="1px solid #ff9500"
+                --width="50%"
+            />
+            <button class="clear-btn" on:click={clearSelections}>Clear Selected Resources</button>
+        </div>
+        <button class="create-event-btn" on:click={() => openEventModal({ resource: null })}>Create Event</button>
     </div>
 {/if}
 
@@ -515,28 +559,6 @@
         background: rgba(0, 0, 0, 0.5);
         z-index: 10;
     }
-
-    select {
-        background-color: #2d2d2d;
-        color: #fff;
-        border: 2px solid #6c6c6c;
-        padding: 10px 20px;
-        border-radius: 4px;
-        font-size: 14px;
-        margin-bottom: 10px;
-        width: 30%;
-        box-sizing: border-box;
-        margin-right: 10px;
-    }
-
-    select:hover {
-        background-color: #454545;
-    }
-
-    select:focus {
-        box-shadow: 0 0 3px #ff9500;
-        outline: none;
-    }
     button {
         padding: 10px 20px;
         background-color: #ff9500;
@@ -549,5 +571,31 @@
 
     button:hover {
         background-color: #cc7a00;
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: start; /* Align the items to the start of the flex container */
+        gap: 10px; /* Spacing between elements */
+        padding: 10px;
+        background-color: #2d2d2d;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 2px solid #6c6c6c;
+    }
+
+    .select-and-clear {
+        display: flex;
+        flex-direction: row; /* Stack elements vertically */
+        align-items: start; /* Align items to the start */
+        width: 50%;
+    }
+
+    .clear-btn {
+        margin-left: 10px; /* Adjust the space as needed */
+    }
+
+    .create-event-btn {
+        margin-left: auto; /* Push the button to the right */
     }
 </style>

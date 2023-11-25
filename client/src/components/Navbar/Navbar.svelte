@@ -29,11 +29,9 @@
             if (response.ok) {
                 user.set({ isLoggedIn: false, user: null, avatar: '' });
                 notificationStore.set({ message: 'Successfully logged out!', type: 'success' });
-            } else {
-                console.error('Logout failed: ', await response.text());
             }
         } catch (error) {
-            console.error('Logout error: ', error);
+            notificationStore.set({ message: 'Logout failed!', type: 'error' });
         }
         closeMenu();
     }

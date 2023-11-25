@@ -27,12 +27,10 @@
         resourceId: null,
         description: '',
         status: '',
+        appraised: 0,
     });
 
     onMount(() => {
-        console.log('initialResource', initialResource);
-        console.log('Employees:', employees);
-
         const today = new Date();
         const defaultStartDate = formatDate(today);
         const defaultEndDate = formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)); // Default to tomorrow
@@ -46,6 +44,7 @@
             title: initialResource && initialResource.title ? initialResource.title : '',
             description: initialResource && initialResource.description ? initialResource.description : '',
             status: initialResource && initialResource.status ? initialResource.status : '',
+            appraised: initialResource && initialResource.appraised ? initialResource.appraised : 0,
             startDate: startDate,
             endDate: endDate,
             resourceId: initialResource && initialResource.resourceId ? parseInt(initialResource.resourceId) : null,
@@ -62,7 +61,7 @@
 
     async function handleEventSubmission(event) {
         event.preventDefault();
-        const { id, title, startDate, endDate, resourceId, description, status } = $eventFormData;
+        const { id, title, startDate, endDate, resourceId, description, status, appraised } = $eventFormData;
 
         if (!title || !startDate || !endDate || !resourceId || !description || !status) {
             notificationStore.set({ message: 'Please fill in all fields', type: 'error' });
@@ -82,13 +81,12 @@
             resourceId,
             description,
             status,
+            appraised,
         };
 
         if (isEditMode) {
-            console.log('Event ID in edit mode:', eventId);
             eventData.id = id;
         }
-        console.log('Event Data:', eventData);
 
         try {
             const endpoint = isEditMode ? '/user/update-event' : '/admin/create-event';
@@ -146,8 +144,15 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="appraised">Appraised:</label>
+                    <select id="appraised" bind:value={$eventFormData.appraised}>
+                        <option value={0}>No</option>
+                        <option value={1}>Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="resourceSelect">Resource:</label>
-                    <select id="resourceSelect" bind:value={$eventFormData.resourceId} disabled={isUser} >
+                    <select id="resourceSelect" bind:value={$eventFormData.resourceId} disabled={isUser}>
                         {#if initialResource === null}
                             <option value={null} disabled>Select Resource</option>
                         {/if}

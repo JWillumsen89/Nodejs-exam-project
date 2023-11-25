@@ -135,7 +135,6 @@
         const email = event.target.email.value;
 
         if (password !== passwordConfirmation) {
-            console.error('Passwords do not match!');
             notificationStore.set({ message: 'Passwords do not match!', type: 'error' });
             return;
         }

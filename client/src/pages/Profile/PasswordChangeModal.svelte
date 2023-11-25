@@ -34,7 +34,6 @@
         };
 
         if (newPassword !== confirmNewPassword) {
-            console.error('Passwords do not match!');
             notificationStore.set({ message: 'New passwords do not match!', type: 'error' });
             currentPasswordInput.disabled = false;
             newPasswordInput.disabled = false;
