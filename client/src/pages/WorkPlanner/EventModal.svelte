@@ -46,13 +46,25 @@
             status: initialResource && initialResource.status ? initialResource.status : '',
             appraised: initialResource && initialResource.appraised ? initialResource.appraised : 0,
             startDate: startDate,
-            endDate: endDate,
+            endDate: subtractOneDayForDisplay(endDate),
             resourceId: initialResource && initialResource.resourceId ? parseInt(initialResource.resourceId) : null,
         });
     });
 
     $: if ($eventFormData.startDate && new Date($eventFormData.endDate) < new Date($eventFormData.startDate)) {
         $eventFormData.endDate = $eventFormData.startDate;
+    }
+
+    function subtractOneDayForDisplay(dateString) {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() - 1);
+        return formatDate(date);
+    }
+
+    function addOneDay(dateString) {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + 1);
+        return formatDate(date);
     }
 
     function formatDate(date) {
@@ -70,14 +82,16 @@
 
         const endDateTime = new Date(endDate);
         endDateTime.setDate(endDateTime.getDate() + 1);
-        const adjustedEndDate = formatDate(endDateTime);
+        const actualEndDate = new Date($eventFormData.endDate);
+        const adjustedEndDate = formatDate(actualEndDate);
         const startDateTime = new Date(startDate);
         const adjustedStartDate = formatDate(startDateTime);
+        const addedOneDayToEndDate = addOneDay(adjustedEndDate);
 
         const eventData = {
             title,
             start: adjustedStartDate,
-            end: adjustedEndDate,
+            end: addedOneDayToEndDate,
             resourceId,
             description,
             status,
@@ -119,40 +133,56 @@
             <h2>{isEditMode ? 'Update Event' : 'Create Event'}</h2>
             <form on:submit={handleEventSubmission}>
                 <div class="form-group">
-                    <label for="eventTitle">Event Title:</label>
-                    <input id="eventTitle" type="text" bind:value={$eventFormData.title} placeholder="Enter Event Title..." disabled={isUser} />
+                    <label for="event-title">Event Title:</label>
+                    <input id="event-title" type="text" bind:value={$eventFormData.title} placeholder="Enter Event Title..." disabled={isUser} />
                 </div>
-                <div class="form-group">
-                    <label for="startDate">Start Date:</label>
-                    <input id="startDate" type="date" max={$eventFormData.endDate} bind:value={$eventFormData.startDate} disabled={isUser} />
-                </div>
-                <div class="form-group">
-                    <label for="endDate">End Date:</label>
-                    <input id="endDate" type="date" min={$eventFormData.startDate} bind:value={$eventFormData.endDate} disabled={isUser} />
+                <div class="dates-group">
+                    <div class="form-group">
+                        <label for="start-date">Start Date:</label>
+                        <input id="start-date" type="date" bind:value={$eventFormData.startDate} disabled={isUser} />
+                    </div>
+                    <div class="form-group">
+                        <label for="end-date">End Date:</label>
+                        <input id="end-date" type="date" bind:value={$eventFormData.endDate} disabled={isUser} />
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="description">Description:</label>
                     <textarea id="description" bind:value={$eventFormData.description} placeholder="Enter Description..." />
                 </div>
-                <div class="form-group">
-                    <label for="status">Status:</label>
-                    <select id="status" bind:value={$eventFormData.status}>
-                        <option value={''} disabled>Select Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="denied">Denied</option>
-                    </select>
+                <div class="status-group">
+                    <div class="form-group">
+                        <label for="status">Status:</label>
+                        <select id="status" bind:value={$eventFormData.status}>
+                            <option value={''} disabled>Select Status</option>
+                            <option value="booked">Booked</option>
+                            <option value="arrived">Arrived</option>
+                            <option value="appraisal">Appraisal</option>
+                            <option value="awaitingappraiserapproval">Awaiting Appraiser Approval</option>
+                            <option value="awaitingcustomerapproval">Awaiting Customer Approval</option>
+                            <option value="disassembly">Disassembly</option>
+                            <option value="waitingforparts">Waiting For Parts</option>
+                            <option value="repair">Repair</option>
+                            <option value="painter">Painter</option>
+                            <option value="returnpainter">Return Painter</option>
+                            <option value="assembly">Assembly</option>
+                            <option value="preparation">Preparation</option>
+                            <option value="calledready">Called Ready</option>
+                            <option value="deliveredtocustomer">Delivered To Customer</option>
+                            <option value="totalloss">Total Loss</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="appraised">Appraised:</label>
+                        <select id="appraised" bind:value={$eventFormData.appraised}>
+                            <option value={0}>No</option>
+                            <option value={1}>Yes</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="appraised">Appraised:</label>
-                    <select id="appraised" bind:value={$eventFormData.appraised}>
-                        <option value={0}>No</option>
-                        <option value={1}>Yes</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="resourceSelect">Resource:</label>
-                    <select id="resourceSelect" bind:value={$eventFormData.resourceId} disabled={isUser}>
+                    <label for="resource-select">Resource:</label>
+                    <select id="resource-select" bind:value={$eventFormData.resourceId} disabled={isUser}>
                         {#if initialResource === null}
                             <option value={null} disabled>Select Resource</option>
                         {/if}
@@ -284,7 +314,7 @@
         color: #fff;
         font-size: 14px;
         line-height: normal;
-        height: calc(1.2em * 20);
+        height: calc(1.2em * 15);
         resize: none;
     }
 
@@ -327,10 +357,11 @@
         color: #888;
     }
 
-    @media (max-width: 768px) {
-        .contents {
-            margin-top: 20px;
-            width: 70%;
-        }
+    .dates-group,
+    .status-group {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        justify-content: flex-start;
     }
 </style>

@@ -1,4 +1,4 @@
-import { createUser, loginUser} from '../../db/mysql/usersMysql.js';
+import { createUser, loginUser } from '../../db/mysql/usersMysql.js';
 
 export const authService = {
     async signUpUser(userData) {
@@ -9,6 +9,4 @@ export const authService = {
         req.session.user = user;
         return user;
     },
-
-    
 };

@@ -41,6 +41,7 @@
     "@fullcalendar/resource-timeline": "^6.1.9",
     "faker": "^5.5.3",
     "jquery": "^3.7.1",
+    "material-icons": "^1.13.12",
     "select2": "^4.1.0-rc.0",
     "socket.io-client": "^4.7.2",
     "svelte-french-toast": "^1.2.0",

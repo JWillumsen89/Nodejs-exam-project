@@ -10,12 +10,15 @@
     import { Modals, openModal, closeModal } from 'svelte-modals';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
+    import { writable } from 'svelte/store';
     import { user } from '../../stores/userStore.js';
     import { BASE_URL } from '../../components/Urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
+    import 'material-icons/iconfont/material-icons.css';
 
     import EventModal from './EventModal.svelte';
+    import SearchResultModal from './SearchResultModal.svelte';
 
     $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -23,9 +26,25 @@
     let calendarApi;
     let allEvents = [];
     let allResources = [];
-    let selectedResourceId = '';
+    let selectedEventId = '';
     let resources;
     let selectedResourceIds = [];
+
+    let windowWidth = writable(window.innerWidth);
+    let windowHeight = writable(window.innerHeight);
+
+    function updateWidth() {
+        windowWidth.set(window.innerWidth);
+        windowHeight.set(window.innerHeight);
+    }
+
+    onMount(() => {
+        window.addEventListener('resize', updateWidth);
+    });
+
+    onDestroy(() => {
+        window.removeEventListener('resize', updateWidth);
+    });
 
     onMount(async () => {
         if (calendarRef) {
@@ -39,7 +58,7 @@
         let endpointUsersData = $user.user.role === 'admin' ? '/admin/get-all-users' : '/user/profile';
         await fetchUsersData(endpointUsersData);
         let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
-  
+
         await fetchEventsData(endpointEventsData);
     });
 
@@ -169,6 +188,20 @@
         openModal(EventModal, modalProps);
     }
 
+    function openSearchResultModal() {
+        let modalProps = {
+            allEvents: allEvents,
+            onGoToEvent: handleGoToEventFromModal,
+        };
+
+        openModal(SearchResultModal, modalProps);
+    }
+
+    function handleGoToEventFromModal(eventId) {
+        console.log('Navigating to event from modal:', eventId);
+        goToEvent({ eventId });
+    }
+
     function formatDate(date) {
         return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     }
@@ -209,7 +242,10 @@
 
     $: options = {
         plugins: [resourceTimelinePlugin, interactionPlugin],
+        schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
         initialView: 'resourceTimelineWeek',
+        height: 'auto',
+        contentHeight: 'auto',
         views: {
             resourceTimelineWeek: {
                 type: 'resourceTimeline',
@@ -241,6 +277,7 @@
         },
         locale: 'da',
         firstDay: 1,
+        hiddenDays: [0, 6],
         editable: $user.user.role === 'admin',
         eventResizableFromStart: $user.user.role === 'admin',
         droppable: $user.user.role === 'admin',
@@ -275,26 +312,85 @@
         events: allEvents,
         eventContent: function (arg) {
             const element = document.createElement('div');
-            element.innerText = arg.event.title;
+            element.setAttribute('data-event-id', arg.event.id);
 
+            if (parseInt(arg.event.id) === selectedEventId) {
+                element.style.border = '10px solid #ff9500'; // Adjust the color and size as needed
+                element.style.padding = '10px'; // Add padding for visual spacing
+                element.style.borderRadius = '4px';
+                const arrowElement = document.createElement('span');
+                arrowElement.className = 'event-arrow';
+                arrowElement.innerHTML = '🡆'; // The arrow icon
+                arrowElement.style.fontSize = '24px'; // Adjust the size as needed
+                arrowElement.style.color = 'red'; // Set the color
+                element.appendChild(arrowElement);
+            }
+
+            // Then, create a span for the title and append it to the element
+            const titleElement = document.createElement('span');
+            titleElement.textContent = arg.event.title;
+            element.appendChild(titleElement);
+
+            // Apply additional styles based on the event status
             switch (arg.event.extendedProps.status) {
-                case 'pending':
-                    element.classList.add('event-pending');
+                case 'booked':
+                    element.classList.add('event-booked');
                     break;
-                case 'approved':
-                    element.classList.add('event-approved');
+                case 'arrived':
+                    element.classList.add('event-arrived');
                     break;
-                case 'denied':
-                    element.classList.add('event-denied');
+                case 'appraisal':
+                    element.classList.add('event-appraisal');
+                    break;
+                case 'awaitingappraiserapproval':
+                    element.classList.add('event-awaitingappraiserapproval');
+                    break;
+                case 'awaiting customer approval':
+                    element.classList.add('event-awaitingcustomerapproval');
+                    break;
+                case 'disassembly':
+                    element.classList.add('event-disassembly');
+                    break;
+                case 'waiting for parts':
+                    element.classList.add('event-waitingforparts');
+                    break;
+                case 'repair':
+                    element.classList.add('event-repair');
+                    break;
+                case 'painter':
+                    element.classList.add('event-painter');
+                    break;
+                case 'returned painter':
+                    element.classList.add('event-returnpainter');
+                    break;
+                case 'assembly':
+                    element.classList.add('event-assembly');
+                    break;
+                case 'preparation':
+                    element.classList.add('event-preparation');
+                    break;
+                case 'called ready':
+                    element.classList.add('event-calledready');
+                    break;
+                case 'delivered to customer':
+                    element.classList.add('event-deliveredtocustomer');
+                    break;
+                case 'total loss':
+                    element.classList.add('event-totalloss');
                     break;
             }
+
+            // Add icon for appraised events
             if (arg.event.extendedProps.appraised === 1) {
-                const iconHTML = '<span class="event-icon"> ✔️</span>';
-                element.innerHTML += iconHTML;
+                const iconElement = document.createElement('span');
+                iconElement.className = 'event-icon';
+                iconElement.innerHTML = ' ✔️'; // The check icon
+                element.appendChild(iconElement);
             }
 
             return { domNodes: [element] };
         },
+
         slotLabelFormat: getSlotLabelFormat(window.innerWidth),
         resourceAreaHeaderContent: 'Smede:',
         slotDuration: { days: 1 },
@@ -313,9 +409,20 @@
     };
 
     function getSlotLabelFormat(screenWidth) {
-        if (screenWidth < 1000) {
+        if (screenWidth < 1200) {
             return [
                 {
+                    month: 'numeric',
+                    day: 'numeric',
+                    omitCommas: true,
+                    separator: ' ',
+                },
+            ];
+        }
+        if (screenWidth < 2000) {
+            return [
+                {
+                    weekday: 'short',
                     month: 'numeric',
                     day: 'numeric',
                     omitCommas: true,
@@ -325,7 +432,7 @@
         } else {
             return [
                 {
-                    weekday: 'short',
+                    weekday: 'long',
                     month: 'numeric',
                     day: 'numeric',
                     omitCommas: true,
@@ -348,6 +455,15 @@
     function clearSelections() {
         selectedResourceIds = [];
     }
+
+    async function goToEvent(eventDetail) {
+        console.log('Event details', eventDetail);
+        let event = allEvents.find(e => e.id === eventDetail.eventId);
+
+        calendarApi.gotoDate(event.start);
+        let selectedEvent = await calendarApi.getEventById(eventDetail.eventId);
+        selectedEventId = eventDetail.eventId;
+    }
 </script>
 
 <div class="spacer" />
@@ -362,51 +478,94 @@
         aria-label="Close modal"
     />
 </Modals>
-{#if $user.user.role === 'admin'}
-    <div class="header-controls">
-        <div class="select-and-clear">
-            <Select
-                items={selectOptions}
-                bind:value={selectedResourceIds}
-                placeholder="All Resources"
-                showChevron={true}
-                clearable={false}
-                multiple
-                --chevron-icon-width="20px"
-                --chevron-icon-colour="white"
-                --background="#ff9500"
-                --border="1px solid #6c6c6c"
-                --border-radius="4px"
-                --box-sizing="border-box"
-                --item-height="38px"
-                --item-hover-bg="#ff9500"
-                --item-hover-color="#fff"
-                --list-background="#3a3a3a"
-                --list-border="1px solid #6c6c6c"
-                --list-border-radius="4px"
-                --list-max-height="200px"
-                --placeholder-color="#fff"
-                --clear-icon-color="#ff9500"
-                --multi-item-bg="#2d2d2d"
-                --multi-item-color="#fff"
-                --multi-item-border-radius="4px"
-                --multi-item-clear-icon-color="#ff9500"
-                --border-focused="1px solid #ff9500"
-                --width="50%"
-            />
-            <button class="clear-btn" on:click={clearSelections}>Clear Selected Resources</button>
-        </div>
-        <button class="create-event-btn" on:click={() => openEventModal({ resource: null })}>Create Event</button>
+{#if $windowWidth <= 650}
+    <div class="rotate-device-message">
+        <span class="material-icons custom-icon"> screen_rotation </span>
+        <p>Please rotate your device to use the calendar.</p>
     </div>
-{/if}
+{:else}
+    {#if $user.user.role === 'admin'}
+        <div class="header-controls">
+            <div class="select-and-clear">
+                {#if windowHeight > 600}
+                    <Select
+                        class="select-control"
+                        items={selectOptions}
+                        bind:value={selectedResourceIds}
+                        placeholder="All Resources"
+                        showChevron={true}
+                        clearable={false}
+                        multiple
+                        --chevron-icon-width="20px"
+                        --chevron-icon-colour="white"
+                        --background="#ff9500"
+                        --border="1px solid #6c6c6c"
+                        --border-radius="4px"
+                        --box-sizing="border-box"
+                        --item-height="38px"
+                        --item-hover-bg="#ff9500"
+                        --item-hover-color="#fff"
+                        --list-background="#3a3a3a"
+                        --list-border="1px solid #6c6c6c"
+                        --list-border-radius="4px"
+                        --list-max-height="200px"
+                        --placeholder-color="#fff"
+                        --clear-icon-color="#ff9500"
+                        --multi-item-bg="#2d2d2d"
+                        --multi-item-color="#fff"
+                        --multi-item-border-radius="4px"
+                        --multi-item-clear-icon-color="#ff9500"
+                        --border-focused="1px solid #ff9500"
+                        --width="50%"
+                    />
+                {:else}
+                    <Select
+                        class="select-control"
+                        items={selectOptions}
+                        bind:value={selectedResourceIds}
+                        placeholder="All Resources"
+                        showChevron={true}
+                        clearable={false}
+                        multiple
+                        --chevron-icon-width="12px"
+                        --chevron-icon-colour="white"
+                        --background="#ff9500"
+                        --border="1px solid #6c6c6c"
+                        --border-radius="4px"
+                        --box-sizing="border-box"
+                        --item-height="30px"
+                        --item-hover-bg="#ff9500"
+                        --item-hover-color="#fff"
+                        --list-background="#3a3a3a"
+                        --list-border="1px solid #6c6c6c"
+                        --list-border-radius="4px"
+                        --list-max-height="200px"
+                        --placeholder-color="#fff"
+                        --clear-icon-color="#ff9500"
+                        --multi-item-bg="#2d2d2d"
+                        --multi-item-color="#fff"
+                        --multi-item-border-radius="4px"
+                        --multi-item-clear-icon-color="#ff9500"
+                        --border-focused="1px solid #ff9500"
+                        --width="50%"
+                        --font-size="12px"
+                        --height="30px"
+                    />
+                {/if}
 
-<FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
+                <button class="clear-btn" on:click={clearSelections}>Clear</button>
+            </div>
+            <button class="create-event-btn" on:click={() => openEventModal({ resource: null })}>Create Event</button>
+            <button on:click={() => openSearchResultModal()}>Search</button>
+        </div>
+    {/if}
+    <FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
+{/if}
 
 <style>
     :global(.my-calendar) {
         height: 80vh !important;
         width: 100% !important;
-        margin-bottom: 30px !important;
     }
 
     :global(.fc) {
@@ -414,27 +573,13 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
     }
 
-    :global(.fc-scroller) {
-        height: calc(100% - 30px) !important;
-    }
-
     :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr) {
-        border-bottom: 5px solid #6c6c6c !important; /* Change border thickness as needed */
+        border-bottom: 5px solid #6c6c6c !important;
     }
 
     :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr:not(.fc-col-header-row):nth-child(odd)) {
         background-color: #212121 !important;
-        border-bottom: 5px solid #6c6c6c !important; /* Change border thickness as needed */
-    }
-
-    :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr:last-child) {
-        border-bottom: 2px solid #6c6c6c !important;
-    }
-
-    :global(.fc-resource-timeline .fc-scrollgrid-sync-table::after) {
-        content: '' !important;
-        display: block !important;
-        height: 30px !important;
+        border-bottom: 5px solid #6c6c6c !important;
     }
 
     :global(.fc-resource-timeline .fc-scrollgrid-sync-table) {
@@ -527,27 +672,71 @@
         background-color: #333333 !important;
     }
 
-    :global(.fc .fc-resource-area td) {
-        background-color: #3a3a3a !important;
+    :global(.event-booked) {
+        background-color: lightblue;
+        color: black;
     }
 
-    :global(.event-pending) {
-        background-color: yellow; /* Color for pending events */
-        color: black; /* Contrasting font color */
+    :global(.event-arrived) {
+        background-color: darkblue;
+        color: white;
     }
 
-    :global(.event-approved) {
-        background-color: green; /* Color for approved events */
-        color: white; /* Contrasting font color */
+    :global(.event-appraisal) {
+        background-color: lavender;
+        color: black;
+    }
+    :global(.event-awaitingappraiserapproval) {
+        background-color: purple;
+        color: white;
+    }
+    :global(.event-awaitingcustomerapproval) {
+        background-color: brown;
+        color: white;
+    }
+    :global(.event-disassembly) {
+        background-color: orange;
+        color: black;
+    }
+    :global(.event-waitingforparts) {
+        background-color: coral;
+        color: black;
+    }
+    :global(.event-repair) {
+        background-color: red;
+        color: white;
+    }
+    :global(.event-painter) {
+        background-color: yellow;
+        color: black;
+    }
+    :global(.event-returnpainter) {
+        background-color: rgb(105, 103, 76);
+        color: white;
+    }
+    :global(.event-assembly) {
+        background-color: green;
+        color: white;
+    }
+    :global(.event-preparation) {
+        background-color: teal;
+        color: white;
+    }
+    :global(.event-calledready) {
+        background-color: rgb(145, 214, 41);
+        color: black;
+    }
+    :global(.event-deliveredtocustomer) {
+        background-color: rgba(255, 217, 0, 0.662);
+        color: black;
+    }
+    :global(.event-totalloss) {
+        background-color: grey;
+        color: white;
     }
 
-    :global(.event-denied) {
-        background-color: red; /* Color for denied events */
-        color: white; /* Contrasting font color */
-    }
-
-    .spacer {
-        margin-top: 40px;
+    :global(.fc .fc-resource-timeline .fc-scrollgrid-sync-table .fc-day-mon, .fc .fc-resource-timeline .fc-scrollgrid .fc-day-mon) {
+        border-left: 10px solid #ff9500 !important;
     }
 
     .backdrop {
@@ -575,27 +764,97 @@
 
     .header-controls {
         display: flex;
-        align-items: start; /* Align the items to the start of the flex container */
-        gap: 10px; /* Spacing between elements */
+        align-items: start;
+        gap: 10px;
         padding: 10px;
         background-color: #2d2d2d;
         border-radius: 8px;
         margin-bottom: 20px;
         border: 2px solid #6c6c6c;
+        margin-top: 40px;
     }
 
     .select-and-clear {
         display: flex;
-        flex-direction: row; /* Stack elements vertically */
-        align-items: start; /* Align items to the start */
+        flex-direction: row;
+        align-items: start;
         width: 50%;
     }
 
     .clear-btn {
-        margin-left: 10px; /* Adjust the space as needed */
+        margin-left: 10px;
     }
 
     .create-event-btn {
-        margin-left: auto; /* Push the button to the right */
+        margin-left: auto;
+    }
+
+    .custom-icon {
+        font-size: 80px;
+    }
+    .rotate-device-message {
+        margin-top: 150px;
+        height: 80vh;
+        color: #ff9500;
+        font-size: 24px;
+    }
+    .event-arrow {
+        font-size: 24px; /* Adjust the size as needed */
+        color: red;
+        position: absolute;
+        right: -20px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    @media screen and (max-height: 600px) {
+        :global(.my-calendar) {
+            height: 100vh !important;
+            width: 100% !important;
+            margin-bottom: 30px !important;
+        }
+        :global(.fc-header-toolbar) {
+            background-color: #2d2d2d !important;
+            color: #ff9500 !important;
+            padding: 5px !important;
+            border: 2px solid #6c6c6c !important;
+            border-radius: 8px !important;
+            font-size: 12px !important;
+            margin-top: -15px;
+        }
+        :global(.fc-button) {
+            background-color: #ff9500 !important;
+            color: #fff !important;
+            border: none !important;
+            padding: 10px 20px !important;
+            border-radius: 4px !important;
+            font-size: 12px !important;
+            margin: 0 5px !important;
+        }
+
+        :global(.fc-datagrid-cell-main) {
+            font-size: 12px !important;
+        }
+
+        :global(.fc-event) {
+            font-size: 11px !important;
+        }
+
+        :global(.fc-timeline-slot-frame) {
+            font-size: 12px !important;
+        }
+        .spacer {
+            margin-top: 0;
+        }
+        .header-controls {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            border: 2px solid #6c6c6c;
+            font-size: 12px;
+            margin-top: 11px;
+        }
     }
 </style>

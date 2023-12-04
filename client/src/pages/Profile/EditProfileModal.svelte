@@ -54,7 +54,7 @@
             if (response.ok) {
                 notificationStore.set({ message: 'Profile successfully edited!', type: 'success' });
                 user.update(currentUser => {
-                    currentUser.user.username = formatString(newUsername);
+                    currentUser.user.username = newUsername;
                     currentUser.user.email = formatString(newEmail);
                     currentUser.user.updatedAt = new Date().toISOString();
                     return currentUser;

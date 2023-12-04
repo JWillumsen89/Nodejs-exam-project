@@ -185,7 +185,7 @@
 <div class="form-container">
     <form on:submit={$isLogin ? handleSubmit : handleSignup}>
         <label for="username">Username{$isLogin ? ' or email' : ''}:</label>
-        <input type="text" id="username" name="username" required value="willumsen"/>
+        <input type="text" id="username" name="username" required value="willumsenjonathan@gmail.com"/>
 
         {#if !$isLogin}
             <label for="email">Email:</label>

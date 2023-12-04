@@ -2,7 +2,6 @@ import pool from './mysqlConnection.js';
 import { hashPassword, comparePassword, isValidPassword } from '../../utils/password.js';
 
 export async function createUser(username, email, password, role = 'user') {
-    username = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase().replace(/\s/g, '');
     email = email.charAt(0).toUpperCase() + email.slice(1).toLowerCase();
 
     try {
@@ -11,7 +10,6 @@ export async function createUser(username, email, password, role = 'user') {
         } else {
             throw new Error('Password is not valid');
         }
-        
     } catch (error) {
         throw new Error(error.message);
     }
@@ -55,13 +53,9 @@ export async function createUser(username, email, password, role = 'user') {
 }
 
 export async function loginUser(loginInput, password) {
-    if (loginInput.includes('@')) {
-        loginInput = loginInput.charAt(0).toUpperCase() + loginInput.slice(1).toLowerCase();
-    } else {
-        loginInput = loginInput.charAt(0).toUpperCase() + loginInput.slice(1).toLowerCase().replace(/\s/g, '');
-    }
+    loginInput = loginInput.charAt(0).toUpperCase() + loginInput.slice(1).toLowerCase();
 
-    const [result] = await pool.execute(`SELECT * FROM users WHERE username = ? OR email = ?`, [loginInput, loginInput]);
+    const [result] = await pool.execute(`SELECT * FROM users WHERE email = ?`, [loginInput]);
 
     if (result.length === 0) {
         throw new Error('User not found');
@@ -129,7 +123,6 @@ export async function getAllUsers() {
 }
 
 export async function editProfile(oldUsername, newUsername, oldEmail, newEmail, sessionUserId) {
-    newUsername = newUsername.charAt(0).toUpperCase() + newUsername.slice(1).toLowerCase().replace(/\s/g, '');
     newEmail = newEmail.charAt(0).toUpperCase() + newEmail.slice(1).toLowerCase();
 
     const [existingUsers] = await pool.query(
@@ -148,7 +141,7 @@ export async function editProfile(oldUsername, newUsername, oldEmail, newEmail, 
     }
 
     // Get the user with oldUsername or oldEmail
-    const [currentUser] = await pool.query('SELECT id FROM users WHERE username = ? OR email = ?', [oldUsername, oldEmail]);
+    const [currentUser] = await pool.query('SELECT id FROM users WHERE email = ?', [oldEmail]);
     if (currentUser.length === 0 || currentUser[0].id !== sessionUserId) {
         throw new Error('Unauthorized to edit this profile');
     }
