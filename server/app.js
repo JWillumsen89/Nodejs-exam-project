@@ -36,14 +36,14 @@ const io = new Server(server, {
 
 import { rateLimit } from 'express-rate-limit';
 
-const allRoutesLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 500, // Limit each IP to 500 requests per `window` (here, per 15 minutes).
-    standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-});
+// const allRoutesLimiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     limit: 500, // Limit each IP to 500 requests per `window` (here, per 15 minutes).
+//     standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+//     legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+// });
 
-app.use(allRoutesLimiter);
+// app.use(allRoutesLimiter);
 
 import authRouter from './authentication/routers/authRouter.js';
 app.use(authRouter(io));

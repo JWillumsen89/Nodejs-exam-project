@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@smui-extra/badge": "^7.0.0-beta.15",
     "@sveltejs/vite-plugin-svelte": "^2.5.2",
-    "svelte": "^4.2.3",
     "svelte-navigator": "^3.2.2",
     "vite": "^4.5.0"
   },
@@ -44,6 +44,7 @@
     "material-icons": "^1.13.12",
     "select2": "^4.1.0-rc.0",
     "socket.io-client": "^4.7.2",
+    "svelte": "^4.2.8",
     "svelte-french-toast": "^1.2.0",
     "svelte-fullcalendar": "^3.0.0",
     "svelte-gantt": "^4.2.1",

@@ -1,20 +1,22 @@
 <script>
-    import { closeModal } from 'svelte-modals';
     import { notificationStore } from '../../stores/notificationStore.js';
     import { writable } from 'svelte/store';
     import { onMount } from 'svelte';
     import { BASE_URL } from '../../components/Urls.js';
     import { user } from '../../stores/userStore.js';
+    import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+    import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+    import { Modals, openModal, closeModal } from 'svelte-modals';
 
     export let isOpen;
     export let initialResource;
     export let employees;
     export let isEditMode = false;
-    export let eventId;
 
-    let isUser = false; // Initialize isUser to false by default
+    let isUser = false;
 
-    // Check if the user's role is 'user' and set isUser accordingly
+    let showModal = false;
+
     if ($user.user.role === 'user') {
         isUser = true;
     }
@@ -33,7 +35,7 @@
     onMount(() => {
         const today = new Date();
         const defaultStartDate = formatDate(today);
-        const defaultEndDate = formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)); // Default to tomorrow
+        const defaultEndDate = formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1));
 
         const startDate = initialResource && initialResource.start ? formatDate(new Date(initialResource.start)) : defaultStartDate;
         const endDate = initialResource && initialResource.end ? formatDate(new Date(initialResource.end)) : defaultEndDate;
@@ -103,7 +105,13 @@
         }
 
         try {
-            const endpoint = isEditMode ? '/user/update-event' : '/admin/create-event';
+            let endpoint = null;
+            if ($user.user.role === 'user') {
+                endpoint = '/user/update-event';
+            } else if ($user.user.role === 'admin') {
+                endpoint = isEditMode ? '/admin/update-event' : '/admin/create-event';
+            }
+
             const response = await fetch(BASE_URL + endpoint, {
                 method: 'POST',
                 credentials: 'include',
@@ -125,12 +133,97 @@
             notificationStore.set({ message: `Event ${isEditMode ? 'updated' : 'created'} successfully!`, type: 'success' });
         }
     }
+    function deleteEvent() {
+        showModal = true;
+    }
+
+    async function sendRequest(event) {
+        event.stopPropagation();
+        try {
+            const { id, title, startDate, endDate, resourceId, description, status, appraised } = $eventFormData;
+
+            const endDateTime = new Date(endDate);
+            endDateTime.setDate(endDateTime.getDate() + 1);
+            const actualEndDate = new Date($eventFormData.endDate);
+            const adjustedEndDate = formatDate(actualEndDate);
+            const startDateTime = new Date(startDate);
+            const adjustedStartDate = formatDate(startDateTime);
+            const addedOneDayToEndDate = addOneDay(adjustedEndDate);
+
+            const eventData = {
+                title,
+                start: adjustedStartDate,
+                end: addedOneDayToEndDate,
+                resourceId,
+                description,
+                status,
+                appraised,
+                id,
+            };
+
+            const response = await fetch(BASE_URL + '/user/send-request', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(eventData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const result = await response.json();
+            notificationStore.set({ message: 'Event updated successfully', type: 'success' });
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to update event', type: 'error' });
+        }
+    }
+
+    async function confirmDelete() {
+        try {
+            const endpoint = '/admin/delete-event';
+            const response = await fetch(BASE_URL + endpoint, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: $eventFormData.id }),
+            });
+            showModal = false;
+            isOpen = false;
+            notificationStore.set({ message: `Event deleted successfully!`, type: 'success' });
+        } catch (error) {
+            notificationStore.set({ message: error.message, type: 'error' });
+        }
+        showModal = false;
+        closeModal();
+    }
+
+    function cancelAndCloseModal() {
+        showModal = false;
+    }
 </script>
 
 {#if isOpen}
+    {#if showModal}
+        <div class="modal-backdrop">
+            <div class="confirmation-modal">
+                <p>Are you sure you want to delete this event?</p>
+                <button on:click={confirmDelete}>Yes, Delete</button>
+                <button on:click={cancelAndCloseModal}>Cancel</button>
+            </div>
+        </div>
+    {/if}
     <div role="dialog" class="modal">
         <div class="contents form-container">
             <h2>{isEditMode ? 'Update Event' : 'Create Event'}</h2>
+            {#if $user.user.role === 'admin' && isEditMode}
+                <button class="delete-icon" on:click={deleteEvent}>
+                    <FontAwesomeIcon icon={faTrashAlt} size="lg" />
+                </button>
+            {/if}
             <form on:submit={handleEventSubmission}>
                 <div class="form-group">
                     <label for="event-title">Event Title:</label>
@@ -196,6 +289,11 @@
                     <button type="button" on:click={closeModal}>Cancel</button>
                 </div>
             </form>
+            {#if $user.user.role === 'user'}
+                <div class="request-btn-div">
+                    <button on:click={event => sendRequest(event)}>Send Request</button>
+                </div>
+            {/if}
         </div>
     </div>
 {/if}
@@ -232,6 +330,7 @@
             max-height: 80vh;
             overflow-y: auto;
         }
+        position: relative;
     }
 
     h2 {
@@ -285,6 +384,7 @@
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.3s ease;
+        margin: 0 10px 0 10px;
     }
 
     button:hover {
@@ -363,5 +463,83 @@
         align-items: center;
         gap: 20px;
         justify-content: flex-start;
+    }
+
+    .delete-icon {
+        background: none;
+        border: none;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        color: #ff9500;
+        position: absolute;
+    }
+
+    .delete-icon:hover {
+        background: none;
+        border: none;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        color: #ff9500;
+        position: absolute;
+    }
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+    }
+
+    .confirmation-modal {
+        width: 30vw;
+        min-width: 200px;
+        max-width: 400px;
+        background: #2d2d2d;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        color: white;
+    }
+
+    .confirmation-modal p {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .confirmation-modal button {
+        padding: 10px 20px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .confirmation-modal button:hover {
+        background-color: #cc7a00;
+    }
+    .request-btn-div {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+    .request-btn-div button {
+        padding: 10px 20px;
+        background-color: #ff9500;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin: 0 10px 0 10px;
     }
 </style>

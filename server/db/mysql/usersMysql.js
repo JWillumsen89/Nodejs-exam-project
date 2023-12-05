@@ -4,15 +4,7 @@ import { hashPassword, comparePassword, isValidPassword } from '../../utils/pass
 export async function createUser(username, email, password, role = 'user') {
     email = email.charAt(0).toUpperCase() + email.slice(1).toLowerCase();
 
-    try {
-        if (isValidPassword(password)) {
-            console.log('Password is valid.');
-        } else {
-            throw new Error('Password is not valid');
-        }
-    } catch (error) {
-        throw new Error(error.message);
-    }
+    isValidPassword(password);
 
     let hashedPassword = await hashPassword(password);
 

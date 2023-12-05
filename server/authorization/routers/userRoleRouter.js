@@ -17,9 +17,32 @@ export default function (io) {
 
     router.post('/user/update-event', isAuthenticated, requireRole(['user']), async (req, res) => {
         try {
-            const event = await authorizationController.updateEvent(req.body);
+            const { description, status, appraised, id } = req.body;
+
+            const updateData = {
+                description,
+                status,
+                appraised,
+                id,
+            };
+            const event = await authorizationController.userUpdateEvent(updateData);
+
             io.emit('event_updated', { event: event });
             res.send({ data: { message: 'Event updated successfully', event: event } });
+        } catch (error) {
+            res.status(400).send({ error: error.message });
+        }
+    });
+
+    router.post('/user/send-request', isAuthenticated, requireRole(['user']), async (req, res) => {
+        try {
+            // const { eventId, userId } = req.body;
+
+            // const request = await authorizationController.sendRequest(eventId, userId);
+
+            // io.emit('requested_changes', { request: request });
+            // res.send({ data: { message: 'Request sent successfully', request: request } });
+            io.emit('requested_changes', { data: req.body });
         } catch (error) {
             res.status(400).send({ error: error.message });
         }

@@ -41,3 +41,22 @@ export async function updateEvent(event) {
         throw error;
     }
 }
+
+export async function userUpdateEvent(event) {
+    try {
+        const { description, status, appraised, id } = event;
+        const [result] = await pool.execute(`UPDATE events SET description = ?, status = ?, appraised = ? WHERE id = ?`, [description, status, appraised, id]);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function deleteEvent(id) {
+    try {
+        const [result] = await pool.execute(`DELETE FROM events WHERE id = ?`, [id]);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}

@@ -29,6 +29,9 @@
     let selectedEventId = '';
     let resources;
     let selectedResourceIds = [];
+    let requestedData = [];
+
+    const requestCount = writable(0);
 
     let windowWidth = writable(window.innerWidth);
     let windowHeight = writable(window.innerHeight);
@@ -90,21 +93,29 @@
         }
     });
 
-    $: {
-        // Check if the user is an admin and selectedResourceIds is defined and not empty
-        if ($user.user.role === 'admin' && Array.isArray(selectedResourceIds) && selectedResourceIds.length > 0) {
-            // Convert selectedResourceIds values to integers, assuming they are objects with a 'value' property
-            let manipulatedSelectedResourceIds = selectedResourceIds.map(id => parseInt(id.value));
+    socket.on('event_deleted', async () => {
+        if ($user.user.role === 'admin') {
+            await fetchEventsData('/admin/get-all-events');
+        } else if ($user.user.role === 'user') {
+            await fetchEventsData('/user/get-events');
+        }
+    });
 
-            // Check if the manipulated array includes an empty string
+    socket.on('requested_changes', data => {
+        console.log('requested_changes', data);
+        requestedData = [...requestedData, data];
+        requestCount.update(n => n + 1);
+    });
+
+    $: {
+        if ($user.user.role === 'admin' && Array.isArray(selectedResourceIds) && selectedResourceIds.length > 0) {
+            let manipulatedSelectedResourceIds = selectedResourceIds.map(id => parseInt(id.value));
             if (manipulatedSelectedResourceIds.includes('')) {
                 resources = allResources;
             } else {
-                // Filter resources based on the IDs in manipulatedSelectedResourceIds
                 resources = allResources.filter(resource => manipulatedSelectedResourceIds.includes(resource.id));
             }
         } else {
-            // Default to all resources if the user is not an admin or selectedResourceIds is empty or undefined
             resources = allResources;
         }
     }
@@ -125,7 +136,6 @@
                     id: user.id,
                     title: user.username,
                 }));
-                //Sort by title
                 transformedData.sort((a, b) => (a.title > b.title ? 1 : -1));
 
                 allResources = transformedData;
@@ -192,13 +202,13 @@
         let modalProps = {
             allEvents: allEvents,
             onGoToEvent: handleGoToEventFromModal,
+            employees: allResources,
         };
 
         openModal(SearchResultModal, modalProps);
     }
 
     function handleGoToEventFromModal(eventId) {
-        console.log('Navigating to event from modal:', eventId);
         goToEvent({ eventId });
     }
 
@@ -221,7 +231,7 @@
         };
 
         try {
-            const response = await fetch(BASE_URL + '/user/update-event', {
+            const response = await fetch(BASE_URL + '/admin/update-event', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -315,23 +325,20 @@
             element.setAttribute('data-event-id', arg.event.id);
 
             if (parseInt(arg.event.id) === selectedEventId) {
-                element.style.border = '10px solid #ff9500'; // Adjust the color and size as needed
-                element.style.padding = '10px'; // Add padding for visual spacing
+                element.style.border = '10px solid #ff9500';
+                element.style.padding = '10px';
                 element.style.borderRadius = '4px';
                 const arrowElement = document.createElement('span');
                 arrowElement.className = 'event-arrow';
-                arrowElement.innerHTML = '🡆'; // The arrow icon
-                arrowElement.style.fontSize = '24px'; // Adjust the size as needed
-                arrowElement.style.color = 'red'; // Set the color
+                arrowElement.innerHTML = '🡆';
+                arrowElement.style.fontSize = '24px';
+                arrowElement.style.color = 'red';
                 element.appendChild(arrowElement);
             }
 
-            // Then, create a span for the title and append it to the element
             const titleElement = document.createElement('span');
             titleElement.textContent = arg.event.title;
             element.appendChild(titleElement);
-
-            // Apply additional styles based on the event status
             switch (arg.event.extendedProps.status) {
                 case 'booked':
                     element.classList.add('event-booked');
@@ -380,11 +387,10 @@
                     break;
             }
 
-            // Add icon for appraised events
             if (arg.event.extendedProps.appraised === 1) {
                 const iconElement = document.createElement('span');
                 iconElement.className = 'event-icon';
-                iconElement.innerHTML = ' ✔️'; // The check icon
+                iconElement.innerHTML = ' ✔️';
                 element.appendChild(iconElement);
             }
 
@@ -457,12 +463,16 @@
     }
 
     async function goToEvent(eventDetail) {
-        console.log('Event details', eventDetail);
         let event = allEvents.find(e => e.id === eventDetail.eventId);
 
         calendarApi.gotoDate(event.start);
         let selectedEvent = await calendarApi.getEventById(eventDetail.eventId);
         selectedEventId = eventDetail.eventId;
+    }
+
+    function handleNotificationClick() {
+        requestCount.set(0);
+        console.log('requestedData', requestedData);
     }
 </script>
 
@@ -484,8 +494,8 @@
         <p>Please rotate your device to use the calendar.</p>
     </div>
 {:else}
-    {#if $user.user.role === 'admin'}
-        <div class="header-controls">
+    <div class="header-controls">
+        {#if $user.user.role === 'admin'}
             <div class="select-and-clear">
                 {#if windowHeight > 600}
                     <Select
@@ -509,6 +519,7 @@
                         --list-border="1px solid #6c6c6c"
                         --list-border-radius="4px"
                         --list-max-height="200px"
+                        --list-z-index="100"
                         --placeholder-color="#fff"
                         --clear-icon-color="#ff9500"
                         --multi-item-bg="#2d2d2d"
@@ -540,6 +551,7 @@
                         --list-border="1px solid #6c6c6c"
                         --list-border-radius="4px"
                         --list-max-height="200px"
+                        --list-z-index="100"
                         --placeholder-color="#fff"
                         --clear-icon-color="#ff9500"
                         --multi-item-bg="#2d2d2d"
@@ -556,9 +568,18 @@
                 <button class="clear-btn" on:click={clearSelections}>Clear</button>
             </div>
             <button class="create-event-btn" on:click={() => openEventModal({ resource: null })}>Create Event</button>
-            <button on:click={() => openSearchResultModal()}>Search</button>
-        </div>
-    {/if}
+        {/if}
+        <button on:click={() => openSearchResultModal()}>Search</button>
+        {#if $user.user.role === 'admin'}
+            <div class="reset-button-container">
+                <button on:click={() => handleNotificationClick()}>Show Requests</button>
+                {#if $requestCount > 0}
+                    <div class="notification-icon" on:click={handleNotificationClick}>{$requestCount}</div>
+                {/if}
+            </div>
+        {/if}
+    </div>
+
     <FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
 {/if}
 
@@ -798,13 +819,26 @@
         color: #ff9500;
         font-size: 24px;
     }
-    .event-arrow {
-        font-size: 24px; /* Adjust the size as needed */
-        color: red;
+
+    .reset-button-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .notification-icon {
         position: absolute;
-        right: -20px;
-        top: 50%;
-        transform: translateY(-50%);
+        top: -10px;
+        right: -10px;
+        width: 25px;
+        height: 25px;
+        background-color: red;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        cursor: pointer;
     }
 
     @media screen and (max-height: 600px) {

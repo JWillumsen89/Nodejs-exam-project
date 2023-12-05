@@ -26,10 +26,18 @@ export const authorizationController = {
         const updatedEvent = await authorizationService.updateEvent(event);
         return updatedEvent;
     },
+    async userUpdateEvent(event) {
+        const updatedEvent = await authorizationService.userUpdateEvent(event);
+        return updatedEvent;
+    },
     async checkAndChangePassword(body, sessionUserId) {
         return await authorizationService.checkAndChangePassword(body, sessionUserId);
     },
     async editProfile(body, sessionUserId) {
         return await authorizationService.editProfile(body, sessionUserId);
+    },
+    async deleteEvent(id) {
+        const deletedEvent = await authorizationService.deleteEvent(id);
+        return deletedEvent;
     }
 };
