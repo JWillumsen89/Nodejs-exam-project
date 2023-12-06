@@ -7,14 +7,15 @@
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
     import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
     import { Modals, openModal, closeModal } from 'svelte-modals';
+    import { slide } from 'svelte/transition';
 
     export let isOpen;
     export let initialResource;
     export let employees;
     export let isEditMode = false;
 
+    let isCollapseOpen = false;
     let isUser = false;
-
     let showModal = false;
 
     if ($user.user.role === 'user') {
@@ -30,6 +31,12 @@
         description: '',
         status: '',
         appraised: 0,
+        resourceUsername: '',
+    });
+
+    const requestFormData = writable({
+        reasonForChange: '',
+        requestNewEndDate: null,
     });
 
     onMount(() => {
@@ -50,6 +57,12 @@
             startDate: startDate,
             endDate: subtractOneDayForDisplay(endDate),
             resourceId: initialResource && initialResource.resourceId ? parseInt(initialResource.resourceId) : null,
+            resourceUsername: initialResource && initialResource.resourceUsername ? initialResource.resourceUsername : '',
+        });
+
+        requestFormData.set({
+            ...$requestFormData,
+            requestNewEndDate: subtractOneDayForDisplay(endDate),
         });
     });
 
@@ -82,13 +95,16 @@
             return;
         }
 
-        const endDateTime = new Date(endDate);
-        endDateTime.setDate(endDateTime.getDate() + 1);
+        // const endDateTime = new Date(endDate);
+        // endDateTime.setDate(endDateTime.getDate() + 1);
         const actualEndDate = new Date($eventFormData.endDate);
         const adjustedEndDate = formatDate(actualEndDate);
         const startDateTime = new Date(startDate);
         const adjustedStartDate = formatDate(startDateTime);
         const addedOneDayToEndDate = addOneDay(adjustedEndDate);
+
+        const employee = employees.find(employee => employee.id === resourceId);
+        const resourceUsernameFromEmployee = employee.title;
 
         const eventData = {
             title,
@@ -98,6 +114,7 @@
             description,
             status,
             appraised,
+            resourceUsername: resourceUsernameFromEmployee,
         };
 
         if (isEditMode) {
@@ -124,8 +141,6 @@
             if (!response.ok) {
                 throw new Error(`Error ${isEditMode ? 'updating' : 'creating'} event ` + response.statusText);
             }
-
-            const data = await response.json();
         } catch (error) {
             notificationStore.set({ message: error.message, type: 'error' });
         } finally {
@@ -140,25 +155,19 @@
     async function sendRequest(event) {
         event.stopPropagation();
         try {
-            const { id, title, startDate, endDate, resourceId, description, status, appraised } = $eventFormData;
+            const { reasonForChange, requestNewEndDate } = $requestFormData;
 
-            const endDateTime = new Date(endDate);
-            endDateTime.setDate(endDateTime.getDate() + 1);
-            const actualEndDate = new Date($eventFormData.endDate);
+            const actualEndDate = new Date(requestNewEndDate);
             const adjustedEndDate = formatDate(actualEndDate);
-            const startDateTime = new Date(startDate);
-            const adjustedStartDate = formatDate(startDateTime);
             const addedOneDayToEndDate = addOneDay(adjustedEndDate);
-
-            const eventData = {
-                title,
-                start: adjustedStartDate,
-                end: addedOneDayToEndDate,
-                resourceId,
-                description,
-                status,
-                appraised,
-                id,
+            const data = {
+                eventId: $eventFormData.id,
+                requesterId: $user.user.id,
+                requesterUsername: $user.user.username,
+                handleStatus: 'pending',
+                handledById: null,
+                reasonForChange: reasonForChange,
+                requestNewEndDate: addedOneDayToEndDate,
             };
 
             const response = await fetch(BASE_URL + '/user/send-request', {
@@ -167,16 +176,16 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(eventData),
+                body: JSON.stringify(data),
             });
 
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            const result = await response.json();
-            notificationStore.set({ message: 'Event updated successfully', type: 'success' });
+
+            notificationStore.set({ message: 'Event request successfully sent', type: 'success' });
         } catch (error) {
-            notificationStore.set({ message: error.message || 'Failed to update event', type: 'error' });
+            notificationStore.set({ message: error.message || 'Failed to send event request', type: 'error' });
         }
     }
 
@@ -191,6 +200,9 @@
                 },
                 body: JSON.stringify({ id: $eventFormData.id }),
             });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
             showModal = false;
             isOpen = false;
             notificationStore.set({ message: `Event deleted successfully!`, type: 'success' });
@@ -291,7 +303,28 @@
             </form>
             {#if $user.user.role === 'user'}
                 <div class="request-btn-div">
-                    <button on:click={event => sendRequest(event)}>Send Request</button>
+                    <button on:click={() => (isCollapseOpen = !isCollapseOpen)}>{isCollapseOpen ? 'Cancel Change Request' : 'Create Change Request'}</button>
+                </div>
+                <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
+                    <div class="requests-div">
+                        <h4>Create Requests</h4>
+                        <form on:submit={event => sendRequest(event)}>
+                            <div class="form-group">
+                                <label for="reason-for-change">Reason for Change:</label>
+                                <textarea
+                                    class="request-textarea"
+                                    id="reason-for-change"
+                                    bind:value={$requestFormData.reasonForChange}
+                                    placeholder="Enter reason for change"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="new-end-date">New End Date:</label>
+                                <input id="new-end-date" type="date" min={$eventFormData.startDate} bind:value={$requestFormData.requestNewEndDate} />
+                            </div>
+                            <button type="submit">Send Request</button>
+                        </form>
+                    </div>
                 </div>
             {/if}
         </div>
@@ -326,6 +359,8 @@
         flex-direction: column;
         pointer-events: auto;
         color: white;
+        max-height: 80vh;
+        overflow-y: auto;
         @media (max-height: 1200px) {
             max-height: 80vh;
             overflow-y: auto;
@@ -416,6 +451,10 @@
         line-height: normal;
         height: calc(1.2em * 15);
         resize: none;
+    }
+
+    textarea.request-textarea {
+        height: calc(1.2em * 5);
     }
 
     textarea:focus {
@@ -541,5 +580,16 @@
         cursor: pointer;
         transition: background-color 0.3s ease;
         margin: 0 10px 0 10px;
+    }
+    .collapsible-content {
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        max-height: 0;
+    }
+
+    .collapsible-content.visible {
+        min-height: 400px;
+        max-height: 600px;
+        overflow-y: auto;
     }
 </style>

@@ -11,7 +11,7 @@
     let username = '';
     let email = '';
 
-    $: username = $user.isLoggedIn ? formatString($user.user.username) : '';
+    $: username = $user.isLoggedIn ? $user.user.username : '';
     $: email = $user.isLoggedIn ? formatString($user.user.email) : '';
 
     function formatString(str) {

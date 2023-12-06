@@ -16,6 +16,7 @@
     import { BASE_URL } from '../../components/Urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
     import 'material-icons/iconfont/material-icons.css';
+    import { slide } from 'svelte/transition';
 
     import EventModal from './EventModal.svelte';
     import SearchResultModal from './SearchResultModal.svelte';
@@ -29,7 +30,10 @@
     let selectedEventId = '';
     let resources;
     let selectedResourceIds = [];
-    let requestedData = [];
+    let pendingRequests = [];
+    let approvedRequests = [];
+    let rejectedRequests = [];
+    let isCollapseOpen = false;
 
     const requestCount = writable(0);
 
@@ -61,8 +65,10 @@
         let endpointUsersData = $user.user.role === 'admin' ? '/admin/get-all-users' : '/user/profile';
         await fetchUsersData(endpointUsersData);
         let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
-
         await fetchEventsData(endpointEventsData);
+        if ($user.user.role === 'admin') {
+            await fetchAllEventRequests();
+        }
     });
 
     $: selectOptions = allResources.map(resource => ({
@@ -101,10 +107,11 @@
         }
     });
 
-    socket.on('requested_changes', data => {
-        console.log('requested_changes', data);
-        requestedData = [...requestedData, data];
-        requestCount.update(n => n + 1);
+    socket.on('requested_changes', async () => {
+        if ($user.user.role === 'admin') {
+            await fetchAllEventRequests();
+        } else if ($user.user.role === 'user') {
+        }
     });
 
     $: {
@@ -172,9 +179,32 @@
                 status: event.status,
                 description: event.description,
                 appraised: event.appraised,
+                resourceUsername: event.resource_username,
                 classNames: `event-${event.status}`,
             }));
             allEvents = transformedData;
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
+        }
+    }
+
+    async function fetchAllEventRequests() {
+        try {
+            let response = await fetch(BASE_URL + '/admin/get-all-event-requests', {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const result = await response.json();
+            const eventRequests = result.data;
+            pendingRequests = eventRequests.filter(request => request.handleStatus === 'pending');
+            approvedRequests = eventRequests.filter(request => request.handleStatus === 'approved');
+            rejectedRequests = eventRequests.filter(request => request.handleStatus === 'rejected');
+
+            requestCount.set(pendingRequests.length);
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
@@ -216,18 +246,31 @@
         return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     }
 
+    function getEmployeeUsernameFromId(resourceId) {
+        if (!resourceId) {
+            return '';
+        }
+        const employee = allResources.find(employee => employee.id === resourceId);
+        return employee.title;
+    }
+
     async function updateEventInDatabase(eventInfo, calendarApi) {
         const event = calendarApi.getEventById(eventInfo.event.id);
+
+        const resourceId = parseInt(event.getResources().map(resource => resource.id)[0]);
+        const employee = allResources.find(employee => employee.id === resourceId);
+        const resourceUsernameFromEmployee = employee.title;
 
         const updatedEvent = {
             id: event.id,
             title: event.title,
             start: formatDate(event.start),
             end: formatDate(event.end),
-            resourceId: event.getResources().map(resource => resource.id)[0],
+            resourceId: resourceId,
             description: event.extendedProps.description,
             status: event.extendedProps.status,
             appraised: event.extendedProps.appraised,
+            resourceUsername: resourceUsernameFromEmployee,
         };
 
         try {
@@ -243,7 +286,6 @@
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            const result = await response.json();
             notificationStore.set({ message: 'Event updated successfully', type: 'success' });
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to update event', type: 'error' });
@@ -307,6 +349,7 @@
                 description: event.extendedProps.description,
                 status: event.extendedProps.status,
                 appraised: event.extendedProps.appraised,
+                resourceUsername: event.extendedProps.resourceUsername,
             };
 
             openModal(EventModal, {
@@ -466,13 +509,7 @@
         let event = allEvents.find(e => e.id === eventDetail.eventId);
 
         calendarApi.gotoDate(event.start);
-        let selectedEvent = await calendarApi.getEventById(eventDetail.eventId);
         selectedEventId = eventDetail.eventId;
-    }
-
-    function handleNotificationClick() {
-        requestCount.set(0);
-        console.log('requestedData', requestedData);
     }
 </script>
 
@@ -572,12 +609,111 @@
         <button on:click={() => openSearchResultModal()}>Search</button>
         {#if $user.user.role === 'admin'}
             <div class="reset-button-container">
-                <button on:click={() => handleNotificationClick()}>Show Requests</button>
+                <button on:click={() => (isCollapseOpen = !isCollapseOpen)}>{isCollapseOpen ? 'Hide Requests' : 'Show Requests'}</button>
                 {#if $requestCount > 0}
-                    <div class="notification-icon" on:click={handleNotificationClick}>{$requestCount}</div>
+                    <div class="notification-icon">{$requestCount}</div>
                 {/if}
             </div>
         {/if}
+    </div>
+    <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
+        <div class="requests-div">
+            <h4 class="request-header pending-requests-header">Pending Requests</h4>
+            {#if pendingRequests.length > 0}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request Id</th>
+                            <th>Requested By</th>
+                            <th>Requester Id</th>
+                            <th>Request Handled By</th>
+                            <th>Status</th>
+                            <th>New End Date</th>
+                            <th>Reason For Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each pendingRequests as request}
+                            <tr>
+                                <td>{request.eventId}</td>
+                                <td>{request.requesterUsername}</td>
+                                <td>{request.requesterId}</td>
+                                <td>{getEmployeeUsernameFromId(request.handledById)}</td>
+                                <td>{request.handleStatus}</td>
+                                <td>{formatDate(new Date(request.requestNewEndDate))}</td>
+                                <td>{request.reasonForChange}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            {:else}
+                <p>No pending requests.</p>
+            {/if}
+
+            <h4 class="request-header approved-requests-header">Approved Requests</h4>
+            {#if approvedRequests.length > 0}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request Id</th>
+                            <th>Requested By</th>
+                            <th>Requester Id</th>
+                            <th>Request Handled By</th>
+                            <th>Status</th>
+                            <th>New End Date</th>
+                            <th>Reason For Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each approvedRequests as request}
+                            <tr>
+                                <td>{request.eventId}</td>
+                                <td>{request.requesterUsername}</td>
+                                <td>{request.requesterId}</td>
+                                <td>{getEmployeeUsernameFromId(request.handledById)}</td>
+                                <td>{request.handleStatus}</td>
+                                <td>{formatDate(new Date(request.requestNewEndDate))}</td>
+                                <td>{request.reasonForChange}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            {:else}
+                <p>No approved requests.</p>
+            {/if}
+
+            <h4 class="request-header rejected-requests-header">Rejected Requests</h4>
+            {#if rejectedRequests.length > 0}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request Id</th>
+                            <th>Requested By</th>
+                            <th>Requester Id</th>
+                            <th>Request Handled By</th>
+                            <th>Status</th>
+                            <th>New End Date</th>
+                            <th>Reason For Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each rejectedRequests as request}
+                            <tr>
+                                <td>{request.eventId}</td>
+                                <td>{request.requesterUsername}</td>
+                                <td>{request.requesterId}</td>
+                                <td>{getEmployeeUsernameFromId(request.handledById)}</td>
+                                <td>{request.handleStatus}</td>
+                                <td>{formatDate(new Date(request.requestNewEndDate))}</td>
+                                <td>{request.reasonForChange}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            {:else}
+                <p>No rejected requests.</p>
+            {/if}
+        </div>
     </div>
 
     <FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
@@ -839,6 +975,176 @@
         justify-content: center;
         font-weight: bold;
         cursor: pointer;
+    }
+
+    .collapsible-content {
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        max-height: 0;
+        margin-bottom: 5px;
+    }
+
+    .collapsible-content.visible {
+        background-color: #2d2d2d;
+        border-radius: 8px;
+        border: 2px solid #6c6c6c;
+        min-height: 70vh;
+        margin-top: 25px;
+        margin-bottom: 20px;
+        overflow: auto;
+    }
+
+    .requests-div {
+        overflow: auto;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .request-header {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin: 10px 0;
+        padding: 5px;
+        border-radius: 4px;
+        text-align: center;
+        width: 20%;
+        margin: 20px auto;
+    }
+
+    .pending-requests-header {
+        background-color: #ff9500;
+        color: #2d2d2d;
+    }
+
+    .approved-requests-header {
+        background-color: #4caf50;
+        color: #fff;
+    }
+
+    .rejected-requests-header {
+        background-color: #f44336;/
+        color: #fff;
+    }
+
+    .requests-div table {
+        width: 90%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        overflow: auto;
+        table-layout: fixed;
+    }
+
+    .requests-div th,
+    .requests-div td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #444;
+        background-color: #3a3a3a;
+        overflow: hidden;
+        word-wrap: break-word;
+    }
+
+    .requests-div th:nth-child(1),
+    .requests-div td:nth-child(1) {
+        width: 10%;
+    }
+    .requests-div th:nth-child(2),
+    .requests-div td:nth-child(2) {
+        width: 15%;
+    }
+    .requests-div th:nth-child(3),
+    .requests-div td:nth-child(3) {
+        width: 10%;
+    }
+    .requests-div th:nth-child(4),
+    .requests-div td:nth-child(4) {
+        width: 15%;
+    }
+    .requests-div th:nth-child(5),
+    .requests-div td:nth-child(5) {
+        width: 10%;
+    }
+    .requests-div th:nth-child(6),
+    .requests-div td:nth-child(6) {
+        width: 20%;
+    }
+    .requests-div th:nth-child(7),
+    .requests-div td:nth-child(7) {
+        width: 50%;
+    }
+
+    th {
+        color: #ff9500;
+        font-weight: bold;
+    }
+
+    th {
+        color: #ff9500;
+        font-weight: bold;
+    }
+
+    tr:hover td {
+        background-color: #4a4a4a;
+    }
+    @media (max-width: 767px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+            display: block;
+        }
+
+        thead tr {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+
+        tr {
+            border: none;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            background-color: #333;
+            overflow: hidden;
+        }
+
+        td {
+            border: none;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        td:before {
+            color: #ff9500;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        td:nth-of-type(1):before {
+            content: 'Username: ';
+        }
+        td:nth-of-type(2):before {
+            content: 'Email: ';
+        }
+        td:nth-of-type(3):before {
+            content: 'Created At: ';
+        }
+        td:nth-of-type(4):before {
+            content: 'Updated At: ';
+        }
     }
 
     @media screen and (max-height: 600px) {

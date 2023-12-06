@@ -39,5 +39,13 @@ export const authorizationController = {
     async deleteEvent(id) {
         const deletedEvent = await authorizationService.deleteEvent(id);
         return deletedEvent;
-    }
+    },
+    async sendRequest(request) {
+        const newRequest = await authorizationService.sendRequest(request);
+        return newRequest;
+    },
+    async getAllEventRequests() {
+        const requests = await authorizationService.getAllEventRequests();
+        return requests;
+    },
 };

@@ -21,8 +21,8 @@ export async function getEventsForUser(userId) {
 export async function createEvent(event) {
     try {
         const [result] = await pool.execute(
-            `INSERT INTO events (title, start, end, resource_id, status, description, appraised) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [event.title, event.start, event.end, event.resourceId, event.status, event.description, event.appraised]
+            `INSERT INTO events (title, start, end, resource_id, status, description, appraised, resource_username) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [event.title, event.start, event.end, event.resourceId, event.status, event.description, event.appraised, event.resourceUsername]
         );
         return result;
     } catch (error) {
@@ -33,8 +33,8 @@ export async function createEvent(event) {
 export async function updateEvent(event) {
     try {
         const [result] = await pool.execute(
-            `UPDATE events SET title = ?, start = ?, end = ?, resource_id = ?, status = ?, description = ?, appraised = ? WHERE id = ?`,
-            [event.title, event.start, event.end, event.resourceId, event.status, event.description, event.appraised, event.id]
+            `UPDATE events SET title = ?, start = ?, end = ?, resource_id = ?, status = ?, description = ?, appraised = ?, resource_username = ? WHERE id = ?`,
+            [event.title, event.start, event.end, event.resourceId, event.status, event.description, event.appraised, event.resourceUsername, event.id]
         );
         return result;
     } catch (error) {

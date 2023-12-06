@@ -20,7 +20,7 @@ export async function createUser(username, email, password, role = 'user') {
     };
 
     try {
-        const [result] = await pool.execute(`INSERT INTO users (username, email, password, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)`, [
+        const [result] = await pool.execute(`INSERT INTO users (username, email, password, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`, [
             username,
             email,
             hashedPassword,
@@ -92,7 +92,7 @@ export async function checkAndChangePassword(oldPassword, newPassword, sessionUs
     const hashedPassword = await hashPassword(newPassword);
 
     // Update password in the database
-    const [updateResult] = await pool.execute(`UPDATE users SET password = ?, updatedAt = NOW() WHERE id = ?`, [hashedPassword, sessionUserId]);
+    const [updateResult] = await pool.execute(`UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?`, [hashedPassword, sessionUserId]);
 
     if (updateResult.affectedRows === 0) {
         throw new Error('Could not update password');
@@ -105,12 +105,12 @@ export async function checkAndChangePassword(oldPassword, newPassword, sessionUs
 }
 
 export async function getAllUsersWithUserRole() {
-    const [result] = await pool.execute(`SELECT id, username, email, role, createdAt, updatedAt FROM users WHERE role = 'user'`);
+    const [result] = await pool.execute(`SELECT id, username, email, role, created_at, updated_at FROM users WHERE role = 'user'`);
     return result;
 }
 
 export async function getAllUsers() {
-    const [result] = await pool.execute(`SELECT id, username, email, role, createdAt, updatedAt FROM users`);
+    const [result] = await pool.execute(`SELECT id, username, email, role, created_at, updated_at FROM users`);
     return result;
 }
 
@@ -139,11 +139,11 @@ export async function editProfile(oldUsername, newUsername, oldEmail, newEmail, 
     }
 
     // Update user's profile
-    await pool.query('UPDATE users SET username = ?, email = ?, updatedAt = NOW() WHERE username = ?', [newUsername, newEmail, oldUsername]);
+    await pool.query('UPDATE users SET username = ?, email = ?, updated_at = NOW() WHERE username = ?', [newUsername, newEmail, oldUsername]);
 
     // Commit the transaction
 
-    const [updatedUser] = await pool.query('SELECT id, username, email, role, createdAt, updatedAt FROM users WHERE username = ?', [newUsername]);
+    const [updatedUser] = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM users WHERE username = ?', [newUsername]);
 
     return updatedUser[0];
 }

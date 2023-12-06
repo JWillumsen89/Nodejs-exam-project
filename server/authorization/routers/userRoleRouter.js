@@ -36,13 +36,12 @@ export default function (io) {
 
     router.post('/user/send-request', isAuthenticated, requireRole(['user']), async (req, res) => {
         try {
-            // const { eventId, userId } = req.body;
+            console.log('req.body', req.body);
 
-            // const request = await authorizationController.sendRequest(eventId, userId);
+            const request = await authorizationController.sendRequest(req.body);
 
-            // io.emit('requested_changes', { request: request });
-            // res.send({ data: { message: 'Request sent successfully', request: request } });
-            io.emit('requested_changes', { data: req.body });
+            io.emit('requested_changes', { request: request });
+            res.send({ data: { message: 'Request sent successfully', request: request } });
         } catch (error) {
             res.status(400).send({ error: error.message });
         }

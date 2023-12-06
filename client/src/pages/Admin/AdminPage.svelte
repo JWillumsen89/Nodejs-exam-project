@@ -86,8 +86,8 @@
                 <tr>
                     <td>{user.username}</td>
                     <td>{user.email}</td>
-                    <td>{formatEuropeanDate(user.createdAt)}</td>
-                    <td>{formatEuropeanDate(user.updatedAt)}</td>
+                    <td>{formatEuropeanDate(user.created_at)}</td>
+                    <td>{formatEuropeanDate(user.updated_at)}</td>
                 </tr>
             {/each}
         </tbody>

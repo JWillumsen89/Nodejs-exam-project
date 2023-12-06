@@ -1,6 +1,6 @@
 <script>
     import { closeModal } from 'svelte-modals';
-    import { onMount, createEventDispatcher } from 'svelte';
+    import { onMount } from 'svelte';
     import { slide } from 'svelte/transition';
     import { user } from '../../stores/userStore.js';
 
@@ -20,7 +20,6 @@
     let searchResource = '';
     let searchAppraised = null;
     let searchInitiated = false;
-    const dispatch = createEventDispatcher();
     let isCollapseOpen = false;
 
     onMount(() => {});
@@ -122,9 +121,9 @@
         return statusDisplayMap[status] || status;
     }
 
-    function resourceName(id) {
-        const employee = employees.find(employee => employee.id === id);
-        return employee ? employee.title : '';
+    function resourceName(event) {
+        const employee = employees.find(employee => employee.id === event.resourceId);
+        return employee ? employee.title : event.resourceUsername;
     }
 </script>
 
@@ -252,7 +251,7 @@
                                         <td>{result.title}</td>
                                         <td>{formatDate(new Date(result.start))}</td>
                                         <td>{formatDateSubtractOneDay(new Date(result.end))}</td>
-                                        <td>{resourceName(result.resourceId)}</td>
+                                        <td>{resourceName(result)}</td>
                                         <td>{displayStatus(result.status)}</td>
                                         <td>
                                             <button class="search-result-btn" on:click={() => toggleDescription(index)}> Show Description </button>
@@ -263,7 +262,11 @@
                                             {/if}
                                         </td>
                                         <td>{result.appraised == 1 ? 'Yes' : 'No'}</td>
-                                        <td><button class="search-result-btn" on:click={() => handleGoToEvent(result.id)}>Go To Event</button></td>
+                                        <td
+                                            >{#if employees.find(employee => employee.id === result.resourceId)}
+                                                <button class="search-result-btn" on:click={() => handleGoToEvent(result.id)}>Go To Event</button>
+                                            {/if}</td
+                                        >
                                     </tr>
                                 {/each}
                             </tbody>
@@ -552,6 +555,7 @@
     .collapsible-content.visible {
         max-height: 500px; /* Adjust this value based on the content */
     }
+
     .search-actions {
         display: flex;
         justify-content: center;

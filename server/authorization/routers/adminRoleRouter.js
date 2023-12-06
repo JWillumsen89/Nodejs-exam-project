@@ -55,6 +55,10 @@ export default function (io) {
             res.status(400).send({ error: error.message });
         }
     });
+    router.get('/admin/get-all-event-requests', isAuthenticated, requireRole(['admin']), async (req, res) => {
+        const requests = await authorizationController.getAllEventRequests();
+        res.send({ data: requests });
+    });
 
     return router;
 }
