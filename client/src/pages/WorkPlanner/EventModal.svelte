@@ -302,39 +302,61 @@
                 </div>
             </form>
             {#if $user.user.role === 'user'}
-            <div class="request-div">
-                <div class="request-btn-div">
-                    <button on:click={() => (isCollapseOpen = !isCollapseOpen)}>{isCollapseOpen ? 'Cancel Change Request' : 'Create Change Request'}</button>
-                </div>
-                <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
-                    <div class="requests-div">
-                        <h2>Create Change Request</h2>
-                        <form on:submit={event => sendRequest(event)}>
-                            <div class="form-group">
-                                <label for="reason-for-change">Reason for Change:</label>
-                                <textarea
-                                    class="request-textarea"
-                                    id="reason-for-change"
-                                    bind:value={$requestFormData.reasonForChange}
-                                    placeholder="Enter reason for change"
-                                />
-                            </div>
-                            <div class="form-group">
-                                <label for="new-end-date">New End Date:</label>
-                                <input id="new-end-date" type="date" min={$eventFormData.startDate} bind:value={$requestFormData.requestNewEndDate} />
-                            </div>
-                            <button type="submit">Send Request</button>
-                        </form>
+                <div class="request-div">
+                    <div class="request-btn-div">
+                        <button on:click={() => (isCollapseOpen = !isCollapseOpen)}>{isCollapseOpen ? 'Cancel Change Request' : 'Create Change Request'}</button
+                        >
+                    </div>
+                    <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
+                        <div class="requests-div">
+                            <h2>Create Change Request</h2>
+                            <form on:submit={event => sendRequest(event)}>
+                                <div class="form-group">
+                                    <label for="reason-for-change">Reason for Change:</label>
+                                    <textarea
+                                        class="request-textarea"
+                                        id="reason-for-change"
+                                        bind:value={$requestFormData.reasonForChange}
+                                        placeholder="Enter reason for change"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-end-date">New End Date:</label>
+                                    <input id="new-end-date" type="date" min={$eventFormData.startDate} bind:value={$requestFormData.requestNewEndDate} />
+                                </div>
+                                <button type="submit">Send Request</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
             {/if}
         </div>
     </div>
 {/if}
 
 <style>
-    
+    .content {
+        width: 40vw;
+        min-width: 250px;
+        max-width: 500px;
+        padding: 20px;
+        padding-top: 10px;
+        background: #2d2d2d;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto;
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+        @media (max-height: 1200px) {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        position: relative;
+    }
+
     button {
         margin: 0 10px 0 10px;
     }

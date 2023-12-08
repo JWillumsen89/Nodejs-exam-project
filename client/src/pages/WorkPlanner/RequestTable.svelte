@@ -40,8 +40,13 @@
 
 <style>
     table {
-        width: 90%;
+        width: 95%;
         table-layout: fixed;
+        border-collapse: collapse;
+        margin: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
     }
 
     th,

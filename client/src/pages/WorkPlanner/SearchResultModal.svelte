@@ -282,7 +282,6 @@
 {/if}
 
 <style>
-
     .row {
         display: flex;
         justify-content: space-between;
@@ -299,6 +298,19 @@
     .table-div {
         overflow-y: auto;
         max-height: 80vh;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+    }
+
+    tr:hover td {
+        background-color: #4a4a4a;
     }
 
     .search-btn {
@@ -390,5 +402,20 @@
         width: 60%;
         min-width: 700px;
         margin: 0 auto;
+    }
+
+    .content {
+        background: #2d2d2d;
+        width: 70vw;
+        min-width: 800px;
+        padding: 20px;
+        padding-top: 10px;
+        overflow-y: auto;
+        max-height: 80vh;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto;
     }
 </style>

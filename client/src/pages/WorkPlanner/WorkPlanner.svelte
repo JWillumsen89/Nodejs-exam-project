@@ -515,7 +515,6 @@
     }
 </script>
 
-<div class="spacer" />
 <Modals>
     <div
         slot="backdrop"
@@ -604,7 +603,7 @@
                     />
                 {/if}
 
-                <button class="clear-btn" on:click={clearSelections}>Clear</button>
+                <button class=" grey-btn clear-btn" on:click={clearSelections}>Clear</button>
             </div>
             <button class="create-event-btn" on:click={() => openEventModal({ resource: null })}>Create Event</button>
         {/if}
@@ -630,19 +629,19 @@
             <RequestTable requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
         </div>
     </div>
-
     <FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
 {/if}
 
 <style>
+    :global(.fc-resource-timeline) {
+        border: 2px solid #6c6c6c !important;
+        border-radius: 8px !important;
+        padding: 5px;
+    }
+
     :global(.my-calendar) {
         height: 80vh !important;
         width: 100% !important;
-    }
-
-    :global(.fc) {
-        border-radius: 8px !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
     }
 
     :global(.fc-resource-timeline .fc-scrollgrid-sync-table tr) {
@@ -656,16 +655,6 @@
 
     :global(.fc-resource-timeline .fc-scrollgrid-sync-table) {
         position: relative !important;
-    }
-
-    :global(.fc-resource-timeline .fc-scrollgrid-sync-table::after) {
-        content: '' !important;
-        display: block !important;
-        height: 30px !important;
-        position: absolute !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
     }
 
     :global(.fc-event) {
@@ -725,19 +714,6 @@
     :global(.fc .fc-scrollgrid) {
         background-color: #2d2d2d !important;
         color: #fff !important;
-        border: 2px solid #6c6c6c !important;
-        border-radius: 8px !important;
-    }
-
-    :global(.fc .fc-scrollgrid td, .fc .fc-scrollgrid th) {
-        border-color: #6c6c6c !important;
-    }
-
-    :global(.fc .fc-col-header-cell) {
-        background-color: #454545 !important;
-        color: #ff9500 !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
     }
 
     :global(.fc .fc-resource-timeline .fc-scrollgrid-section > td) {
@@ -808,7 +784,7 @@
     }
 
     :global(.fc .fc-resource-timeline .fc-scrollgrid-sync-table .fc-day-mon, .fc .fc-resource-timeline .fc-scrollgrid .fc-day-mon) {
-        border-left: 10px solid #ff9500 !important;
+        border-left: 5px solid #ff9500 !important;
     }
 
     .header-controls {
@@ -945,9 +921,7 @@
         :global(.fc-timeline-slot-frame) {
             font-size: 12px !important;
         }
-        .spacer {
-            margin-top: 0;
-        }
+
         .header-controls {
             display: flex;
             align-items: start;

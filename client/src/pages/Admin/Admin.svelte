@@ -115,6 +115,16 @@
 
     table {
         margin-top: 20px;
+        border-collapse: collapse;
+        width: 100%;
+        margin: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+    }
+
+    tr:hover td {
+        background-color: #4a4a4a;
     }
 
     @media (max-width: 767px) {
