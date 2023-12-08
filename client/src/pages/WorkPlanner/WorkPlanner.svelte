@@ -20,6 +20,7 @@
 
     import EventModal from './EventModal.svelte';
     import SearchResultModal from './SearchResultModal.svelte';
+    import RequestTable from './RequestTable.svelte';
 
     $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -239,7 +240,7 @@
     }
 
     function handleGoToEventFromModal(eventId) {
-        goToEvent({ eventId });
+        goToEvent(eventId);
     }
 
     function formatDate(date) {
@@ -376,6 +377,7 @@
                 arrowElement.innerHTML = '🡆';
                 arrowElement.style.fontSize = '24px';
                 arrowElement.style.color = 'red';
+                arrowElement.style.textShadow = '0px 0px 3px #000000';
                 element.appendChild(arrowElement);
             }
 
@@ -505,11 +507,11 @@
         selectedResourceIds = [];
     }
 
-    async function goToEvent(eventDetail) {
-        let event = allEvents.find(e => e.id === eventDetail.eventId);
+    async function goToEvent(eventId) {
+        let event = allEvents.find(e => e.id === eventId);
 
         calendarApi.gotoDate(event.start);
-        selectedEventId = eventDetail.eventId;
+        selectedEventId = eventId;
     }
 </script>
 
@@ -617,102 +619,15 @@
         {/if}
     </div>
     <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
-        <div class="requests-div">
+        <div id="requests-div" class="requests-div">
             <h4 class="request-header pending-requests-header">Pending Requests</h4>
-            {#if pendingRequests.length > 0}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Request Id</th>
-                            <th>Requested By</th>
-                            <th>Requester Id</th>
-                            <th>Request Handled By</th>
-                            <th>Status</th>
-                            <th>New End Date</th>
-                            <th>Reason For Change</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each pendingRequests as request}
-                            <tr>
-                                <td>{request.eventId}</td>
-                                <td>{request.requesterUsername}</td>
-                                <td>{request.requesterId}</td>
-                                <td>{getEmployeeUsernameFromId(request.handledById)}</td>
-                                <td>{request.handleStatus}</td>
-                                <td>{formatDate(new Date(request.requestNewEndDate))}</td>
-                                <td>{request.reasonForChange}</td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {:else}
-                <p>No pending requests.</p>
-            {/if}
+            <RequestTable requests={pendingRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
 
             <h4 class="request-header approved-requests-header">Approved Requests</h4>
-            {#if approvedRequests.length > 0}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Request Id</th>
-                            <th>Requested By</th>
-                            <th>Requester Id</th>
-                            <th>Request Handled By</th>
-                            <th>Status</th>
-                            <th>New End Date</th>
-                            <th>Reason For Change</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each approvedRequests as request}
-                            <tr>
-                                <td>{request.eventId}</td>
-                                <td>{request.requesterUsername}</td>
-                                <td>{request.requesterId}</td>
-                                <td>{getEmployeeUsernameFromId(request.handledById)}</td>
-                                <td>{request.handleStatus}</td>
-                                <td>{formatDate(new Date(request.requestNewEndDate))}</td>
-                                <td>{request.reasonForChange}</td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {:else}
-                <p>No approved requests.</p>
-            {/if}
+            <RequestTable requests={approvedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
 
             <h4 class="request-header rejected-requests-header">Rejected Requests</h4>
-            {#if rejectedRequests.length > 0}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Request Id</th>
-                            <th>Requested By</th>
-                            <th>Requester Id</th>
-                            <th>Request Handled By</th>
-                            <th>Status</th>
-                            <th>New End Date</th>
-                            <th>Reason For Change</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each rejectedRequests as request}
-                            <tr>
-                                <td>{request.eventId}</td>
-                                <td>{request.requesterUsername}</td>
-                                <td>{request.requesterId}</td>
-                                <td>{getEmployeeUsernameFromId(request.handledById)}</td>
-                                <td>{request.handleStatus}</td>
-                                <td>{formatDate(new Date(request.requestNewEndDate))}</td>
-                                <td>{request.reasonForChange}</td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {:else}
-                <p>No rejected requests.</p>
-            {/if}
+            <RequestTable requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
         </div>
     </div>
 
@@ -896,29 +811,6 @@
         border-left: 10px solid #ff9500 !important;
     }
 
-    .backdrop {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        left: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 10;
-    }
-    button {
-        padding: 10px 20px;
-        background-color: #ff9500;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-        background-color: #cc7a00;
-    }
-
     .header-controls {
         display: flex;
         align-items: start;
@@ -949,12 +841,6 @@
     .custom-icon {
         font-size: 80px;
     }
-    .rotate-device-message {
-        margin-top: 150px;
-        height: 80vh;
-        color: #ff9500;
-        font-size: 24px;
-    }
 
     .reset-button-container {
         position: relative;
@@ -978,9 +864,6 @@
     }
 
     .collapsible-content {
-        overflow: hidden;
-        transition: max-height 0.3s ease-out;
-        max-height: 0;
         margin-bottom: 5px;
     }
 
@@ -1022,129 +905,8 @@
     }
 
     .rejected-requests-header {
-        background-color: #f44336;/
+        background-color: #f44336;
         color: #fff;
-    }
-
-    .requests-div table {
-        width: 90%;
-        margin: 20px auto;
-        border-collapse: collapse;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        overflow: auto;
-        table-layout: fixed;
-    }
-
-    .requests-div th,
-    .requests-div td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #444;
-        background-color: #3a3a3a;
-        overflow: hidden;
-        word-wrap: break-word;
-    }
-
-    .requests-div th:nth-child(1),
-    .requests-div td:nth-child(1) {
-        width: 10%;
-    }
-    .requests-div th:nth-child(2),
-    .requests-div td:nth-child(2) {
-        width: 15%;
-    }
-    .requests-div th:nth-child(3),
-    .requests-div td:nth-child(3) {
-        width: 10%;
-    }
-    .requests-div th:nth-child(4),
-    .requests-div td:nth-child(4) {
-        width: 15%;
-    }
-    .requests-div th:nth-child(5),
-    .requests-div td:nth-child(5) {
-        width: 10%;
-    }
-    .requests-div th:nth-child(6),
-    .requests-div td:nth-child(6) {
-        width: 20%;
-    }
-    .requests-div th:nth-child(7),
-    .requests-div td:nth-child(7) {
-        width: 50%;
-    }
-
-    th {
-        color: #ff9500;
-        font-weight: bold;
-    }
-
-    th {
-        color: #ff9500;
-        font-weight: bold;
-    }
-
-    tr:hover td {
-        background-color: #4a4a4a;
-    }
-    @media (max-width: 767px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-            display: block;
-        }
-
-        thead tr {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-        }
-
-        tr {
-            border: none;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            background-color: #333;
-            overflow: hidden;
-        }
-
-        td {
-            border: none;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            border-bottom: 1px solid #444;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        td:before {
-            color: #ff9500;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        td:nth-of-type(1):before {
-            content: 'Username: ';
-        }
-        td:nth-of-type(2):before {
-            content: 'Email: ';
-        }
-        td:nth-of-type(3):before {
-            content: 'Created At: ';
-        }
-        td:nth-of-type(4):before {
-            content: 'Updated At: ';
-        }
     }
 
     @media screen and (max-height: 600px) {

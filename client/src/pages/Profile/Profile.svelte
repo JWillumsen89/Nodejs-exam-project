@@ -49,10 +49,10 @@
     <img src={get(user).avatar} alt="Avatar" />
     <div class="user-info">
         {#if userData}
-            <h2><span class="label">Username:</span> {userData.username}</h2>
-            <h2><span class="label">Email:</span> {userData.email}</h2>
-            <h2><span class="label">Created at:</span> {formatEuropeanDate(userData.createdAt)}</h2>
-            <h2><span class="label">Updated at:</span> {formatEuropeanDate(userData.updatedAt)}</h2>
+            <h2><span class="user-label">Username:</span> {userData.username}</h2>
+            <h2><span class="user-label">Email:</span> {userData.email}</h2>
+            <h2><span class="user-label">Created at:</span> {formatEuropeanDate(userData.createdAt)}</h2>
+            <h2><span class="user-label">Updated at:</span> {formatEuropeanDate(userData.updatedAt)}</h2>
         {/if}
     </div>
     <div class="button-group">
@@ -77,30 +77,16 @@
         margin: 10px 0;
     }
 
-    .label {
+    .user-label {
         font-weight: bold;
         color: #ff9500;
     }
 
-    .button-group {
-        text-align: center;
-    }
-
     button {
-        margin-top: 15px;
-        padding: 10px 20px;
-        background-color: #ff9500;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
         display: inline-block;
         margin: 10px;
     }
-    button:hover {
-        background-color: #cc7a00;
-    }
+
     .form-container img {
         display: block;
         width: 120px;
@@ -146,16 +132,6 @@
         to {
             transform: rotate(360deg);
         }
-    }
-
-    .backdrop {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        left: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 10;
     }
 
     @media (max-width: 768px) {

@@ -113,35 +113,8 @@
         color: #ff9500;
     }
 
-    .error-message {
-        color: red;
-        text-align: center;
-    }
-
     table {
-        width: 100%;
-        border-collapse: collapse;
         margin-top: 20px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    th,
-    td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #444;
-        background-color: #3a3a3a;
-    }
-
-    th {
-        color: #ff9500;
-        font-weight: bold;
-    }
-
-    tr:hover td {
-        background-color: #4a4a4a;
     }
 
     @media (max-width: 767px) {

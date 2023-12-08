@@ -128,7 +128,7 @@
 </script>
 
 {#if isOpen}
-    <div role="dialog" class="search-modal">
+    <div role="dialog" class="modal">
         <div class="content">
             <div class="search-div">
                 <h2>Search For Events</h2>
@@ -153,10 +153,10 @@
                 </div>
 
                 <div class="search-actions">
-                    <button on:click={() => (isCollapseOpen = !isCollapseOpen)}>
+                    <button class="search-btn" on:click={() => (isCollapseOpen = !isCollapseOpen)}>
                         {isCollapseOpen ? 'Hide Advanced Search' : 'Show Advanced Search'}
                     </button>
-                    <button on:click={clearSearch}>Clear Search</button>
+                    <button class="search-btn grey-btn" on:click={clearSearch}>Clear Search</button>
                 </div>
                 <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
                     <div class="row">
@@ -254,7 +254,7 @@
                                         <td>{resourceName(result)}</td>
                                         <td>{displayStatus(result.status)}</td>
                                         <td>
-                                            <button class="search-result-btn" on:click={() => toggleDescription(index)}> Show Description </button>
+                                            <button class="table-btn" on:click={() => toggleDescription(index)}> Show Description </button>
                                             {#if activeDescriptionIndex === index}
                                                 <div class="description-tooltip">
                                                     {result.description}
@@ -264,7 +264,7 @@
                                         <td>{result.appraised == 1 ? 'Yes' : 'No'}</td>
                                         <td
                                             >{#if employees.find(employee => employee.id === result.resourceId)}
-                                                <button class="search-result-btn" on:click={() => handleGoToEvent(result.id)}>Go To Event</button>
+                                                <button class="table-btn" on:click={() => handleGoToEvent(result.id)}>Go To Event</button>
                                             {/if}</td
                                         >
                                     </tr>
@@ -276,40 +276,12 @@
             {:else}
                 <p class="error-message">No results found.</p>
             {/if}
-            <button type="button" on:click={closeModal}>Close</button>
+            <button class="search-btn grey-btn" type="button" on:click={closeModal}>Close</button>
         </div>
     </div>
 {/if}
 
 <style>
-    .search-modal {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        left: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        pointer-events: none;
-        z-index: 50;
-        background: rgba(0, 0, 0, 0.5);
-    }
-
-    .content {
-        background: #2d2d2d;
-        width: 70vw;
-        min-width: 800px;
-        padding: 20px;
-        padding-top: 10px;
-        overflow-y: auto;
-        max-height: 80vh;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        pointer-events: auto;
-    }
 
     .row {
         display: flex;
@@ -329,104 +301,9 @@
         max-height: 80vh;
     }
 
-    h2 {
-        text-align: center;
-        font-size: 24px;
-        margin-bottom: 20px;
-        margin-top: 0;
-        color: #ff9500;
-    }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-
-    .form-group label {
-        margin-bottom: 5px;
-        font-size: 16px;
-        color: #fff;
-    }
-
-    input {
-        width: 100%;
-        padding: 10px;
-        box-sizing: border-box;
-        border-radius: 4px;
-        border: 1px solid #555;
-        background-color: #333;
-        color: #fff;
-        font-size: 14px;
-    }
-
-    input:focus {
-        border-color: #ff9500;
-        outline: none;
-        box-shadow: 0 0 3px #ff9500;
-    }
-
-    input:disabled {
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.1));
-        color: #888;
-    }
-
-    button {
-        padding: 10px 20px;
-        background-color: #ff9500;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
+    .search-btn {
         width: 50%;
         margin: 0 auto;
-    }
-
-    button:hover {
-        background-color: #cc7a00;
-    }
-
-    button:last-child {
-        background-color: #404040;
-    }
-
-    button:last-child:hover {
-        background-color: #777;
-    }
-
-    button:disabled {
-        background-color: #777;
-        cursor: default;
-    }
-
-    select {
-        width: 100%;
-        padding: 10px;
-        box-sizing: border-box;
-        border-radius: 4px;
-        border: 1px solid #555;
-        background-color: #333;
-        color: #fff;
-        font-size: 14px;
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-    }
-
-    select:focus {
-        border-color: #ff9500;
-        outline: none;
-        box-shadow: 0 0 3px #ff9500;
-    }
-
-    select:hover {
-        background-color: #444;
-    }
-
-    select:disabled {
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.1));
-        color: #888;
     }
 
     .dates-group {
@@ -481,55 +358,6 @@
         margin-right: 0;
     }
 
-    .table-div {
-        overflow-y: auto;
-        min-height: 300px;
-        margin: 20px auto;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        padding: 10px;
-        padding-top: 0;
-        background-color: #333;
-    }
-
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        overflow-y: auto;
-    }
-
-    thead th {
-        position: sticky;
-        top: 0;
-        background-color: #3a3a3a;
-        color: #ff9500;
-        font-weight: bold;
-        z-index: 10;
-    }
-
-    tbody tr {
-        z-index: 1;
-    }
-
-    th,
-    td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #444;
-    }
-
-    tr:hover td {
-        background-color: #4a4a4a;
-    }
-
-    .error-message {
-        color: #ff9500;
-        text-align: center;
-    }
-
     .description-tooltip {
         position: fixed;
         top: 50%;
@@ -546,25 +374,18 @@
         max-height: 80%;
         overflow-y: auto;
     }
-    .collapsible-content {
-        overflow: hidden;
-        transition: max-height 0.3s ease-out;
-        max-height: 0;
-    }
 
     .collapsible-content.visible {
-        max-height: 500px; /* Adjust this value based on the content */
+        max-height: 500px;
     }
 
     .search-actions {
         display: flex;
         justify-content: center;
-        gap: 10px; /* Adjust the spacing between buttons */
-        margin-bottom: 20px; /* Space before the collapsible content or search results */
+        gap: 10px;
+        margin-bottom: 20px;
     }
-    .search-result-btn {
-        width: 100%;
-    }
+
     .search-div {
         width: 60%;
         min-width: 700px;
