@@ -37,6 +37,10 @@ h2 {
   color: #ff9500;
 }
 
+p {
+  color: #ff9500;
+}
+
 .card {
   padding: 2em;
 }
@@ -260,7 +264,7 @@ tbody tr {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 600;
 }
 
 .confirmation-modal {
@@ -281,6 +285,7 @@ tbody tr {
   margin-bottom: 20px;
   color: #ff9500;
 }
+
 
 .profile-content {
   width: 400px;

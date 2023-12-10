@@ -60,3 +60,12 @@ export async function deleteEvent(id) {
         throw error;
     }
 }
+
+export async function getEvent(id) {
+    try {
+        const [result] = await pool.execute(`SELECT * FROM events WHERE id = ?`, [id]);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}

@@ -40,6 +40,10 @@ export const authorizationController = {
         const deletedEvent = await authorizationService.deleteEvent(id);
         return deletedEvent;
     },
+    async getEvent(id) {
+        const event = await authorizationService.getEvent(id);
+        return event;
+    },
     async sendRequest(request) {
         const newRequest = await authorizationService.sendRequest(request);
         return newRequest;
@@ -47,5 +51,9 @@ export const authorizationController = {
     async getAllEventRequests() {
         const requests = await authorizationService.getAllEventRequests();
         return requests;
+    },
+    async updateEventRequest(eventRequestId, request) {
+        const updatedRequest = await authorizationService.updateEventRequest(eventRequestId, request);
+        return updatedRequest;
     },
 };

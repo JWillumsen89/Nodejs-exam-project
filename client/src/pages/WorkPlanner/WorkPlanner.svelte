@@ -17,6 +17,7 @@
     import { notificationStore } from '../../stores/notificationStore.js';
     import 'material-icons/iconfont/material-icons.css';
     import { slide } from 'svelte/transition';
+    import { tick } from 'svelte';
 
     import EventModal from './EventModal.svelte';
     import SearchResultModal from './SearchResultModal.svelte';
@@ -115,6 +116,13 @@
         }
     });
 
+    socket.on('event_request_updated', async () => {
+        if ($user.user.role === 'admin') {
+            await fetchAllEventRequests();
+        } else if ($user.user.role === 'user') {
+        }
+    });
+
     $: {
         if ($user.user.role === 'admin' && Array.isArray(selectedResourceIds) && selectedResourceIds.length > 0) {
             let manipulatedSelectedResourceIds = selectedResourceIds.map(id => parseInt(id.value));
@@ -200,12 +208,34 @@
             }
 
             const result = await response.json();
-            const eventRequests = result.data;
+            console.log(result.data);
+            const eventRequests = result.data.map(request => {
+                const event = allEvents.find(e => e.id === request.eventId);
+                return { ...request, eventTitle: event ? event.title : 'Unknown Event' };
+            });
+
             pendingRequests = eventRequests.filter(request => request.handleStatus === 'pending');
             approvedRequests = eventRequests.filter(request => request.handleStatus === 'approved');
             rejectedRequests = eventRequests.filter(request => request.handleStatus === 'rejected');
 
             requestCount.set(pendingRequests.length);
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
+        }
+    }
+
+    async function getEventById(eventId) {
+        try {
+            let response = await fetch(BASE_URL + `/admin/get-event/${eventId}`, {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const result = await response.json();
+            return result.data.event;
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
@@ -512,6 +542,41 @@
 
         calendarApi.gotoDate(event.start);
         selectedEventId = eventId;
+
+        await tick();
+        scrollToCalendar();
+    }
+
+    function scrollToCalendar() {
+        const calendarElement = document.getElementById('my-fullcalendar');
+        if (calendarElement) {
+            calendarElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    async function openEventModalFromRequestsList(eventId) {
+        const event = await getEventById(eventId);
+        console.log(event);
+
+        const eventData = {
+            id: event[0].id,
+            title: event[0].title,
+            start: event[0].start,
+            end: event[0].end,
+            resourceId: event[0].resource_id,
+            description: event[0].description,
+            status: event[0].status,
+            appraised: event[0].appraised,
+            resourceUsername: event[0].resource_username,
+        };
+
+        console.log(eventData);
+
+        openModal(EventModal, {
+            initialResource: eventData,
+            employees: allResources,
+            isEditMode: true,
+        });
     }
 </script>
 
@@ -620,16 +685,18 @@
     <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
         <div id="requests-div" class="requests-div">
             <h4 class="request-header pending-requests-header">Pending Requests</h4>
-            <RequestTable requests={pendingRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
+            <RequestTable type="pending" requests={pendingRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} {openEventModalFromRequestsList} />
 
             <h4 class="request-header approved-requests-header">Approved Requests</h4>
-            <RequestTable requests={approvedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
+            <RequestTable type="approved" requests={approvedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} {openEventModalFromRequestsList} />
 
             <h4 class="request-header rejected-requests-header">Rejected Requests</h4>
-            <RequestTable requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} />
+            <RequestTable type="rejected" requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} {openEventModalFromRequestsList} />
         </div>
     </div>
-    <FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
+    <div id="my-fullcalendar">
+        <FullCalendar bind:this={calendarRef} {options} class="my-calendar" />
+    </div>
 {/if}
 
 <style>
