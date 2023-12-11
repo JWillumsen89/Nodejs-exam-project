@@ -95,8 +95,6 @@
             return;
         }
 
-        // const endDateTime = new Date(endDate);
-        // endDateTime.setDate(endDateTime.getDate() + 1);
         const actualEndDate = new Date($eventFormData.endDate);
         const adjustedEndDate = formatDate(actualEndDate);
         const startDateTime = new Date(startDate);

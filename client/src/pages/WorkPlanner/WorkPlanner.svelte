@@ -685,13 +685,13 @@
     <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
         <div id="requests-div" class="requests-div">
             <h4 class="request-header pending-requests-header">Pending Requests</h4>
-            <RequestTable type="pending" requests={pendingRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} {openEventModalFromRequestsList} />
+            <RequestTable type="pending" requests={pendingRequests} {goToEvent} {getEmployeeUsernameFromId} {openEventModalFromRequestsList} />
 
             <h4 class="request-header approved-requests-header">Approved Requests</h4>
-            <RequestTable type="approved" requests={approvedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} {openEventModalFromRequestsList} />
+            <RequestTable type="approved" requests={approvedRequests} {goToEvent} {getEmployeeUsernameFromId} {openEventModalFromRequestsList} />
 
             <h4 class="request-header rejected-requests-header">Rejected Requests</h4>
-            <RequestTable type="rejected" requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {formatDate} {openEventModalFromRequestsList} />
+            <RequestTable type="rejected" requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {openEventModalFromRequestsList} />
         </div>
     </div>
     <div id="my-fullcalendar">
