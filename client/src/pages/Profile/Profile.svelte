@@ -6,13 +6,14 @@
     import { Modals, openModal, closeModal } from 'svelte-modals';
     import PasswordChangeModal from './PasswordChangeModal.svelte';
     import EditProfileModal from './EditProfileModal.svelte';
-    import { formatEuropeanDate } from '../../components/dateFormat.js';
-    
+    import { formatDateEuropean } from '../../utils/dateFormatting.js';
+
     $: pageTitle.set('Profile'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
     let userData;
 
     $: userData = $user.user;
+    console.log($user.user);
 
     function openChangePasswordModal() {
         openModal(PasswordChangeModal, { title: 'Change Password' });
@@ -51,8 +52,8 @@
         {#if userData}
             <h2><span class="user-label">Username:</span> {userData.username}</h2>
             <h2><span class="user-label">Email:</span> {userData.email}</h2>
-            <h2><span class="user-label">Created at:</span> {formatEuropeanDate(userData.createdAt)}</h2>
-            <h2><span class="user-label">Updated at:</span> {formatEuropeanDate(userData.updatedAt)}</h2>
+            <h2><span class="user-label">Created at:</span> {formatDateEuropean(userData.created_at, true)}</h2>
+            <h2><span class="user-label">Updated at:</span> {formatDateEuropean(userData.updated_at, true)}</h2>
         {/if}
     </div>
     <div class="button-group">
@@ -93,7 +94,10 @@
         height: 120px;
         border-radius: 50%;
         margin: auto;
-        transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+        transition:
+            transform 0.3s ease,
+            box-shadow 0.3s ease,
+            filter 0.3s ease;
         filter: grayscale(100%);
         box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
         position: relative;
@@ -102,7 +106,9 @@
 
     .form-container img:hover {
         transform: scale(1.05) rotate3d(0, 1, 0, 20deg);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 15px 5px #00ffaa;
+        box-shadow:
+            0 10px 20px rgba(0, 0, 0, 0.4),
+            0 0 15px 5px #00ffaa;
         filter: grayscale(0%);
     }
 

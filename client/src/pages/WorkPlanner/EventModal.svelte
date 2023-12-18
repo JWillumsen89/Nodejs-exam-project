@@ -2,19 +2,23 @@
     import { notificationStore } from '../../stores/notificationStore.js';
     import { writable } from 'svelte/store';
     import { onMount } from 'svelte';
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { user } from '../../stores/userStore.js';
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
     import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
     import { Modals, openModal, closeModal } from 'svelte-modals';
     import { slide } from 'svelte/transition';
+    import { formatDateEuropean, formatDateUS, addOneDay, subtractOneDay } from '../../utils/dateFormatting.js';
+    import { capitalizeFirstLetter } from '../../utils/stringFormatting.js';
 
     export let isOpen;
     export let initialResource;
     export let employees;
     export let isEditMode = false;
+    export let eventRequests = [];
 
-    let isCollapseOpen = false;
+    let isCreateChangeRequestOpen = false;
+    let isRequestHistoryOpen = false;
     let isUser = false;
     let showModal = false;
 
@@ -40,12 +44,13 @@
     });
 
     onMount(() => {
+        console.log('Event requests: ', eventRequests);
         const today = new Date();
-        const defaultStartDate = formatDate(today);
-        const defaultEndDate = formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1));
+        const defaultStartDate = formatDateUS(today);
+        const defaultEndDate = formatDateUS(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1));
 
-        const startDate = initialResource && initialResource.start ? formatDate(new Date(initialResource.start)) : defaultStartDate;
-        const endDate = initialResource && initialResource.end ? formatDate(new Date(initialResource.end)) : defaultEndDate;
+        const startDate = initialResource && initialResource.start ? formatDateUS(new Date(initialResource.start)) : defaultStartDate;
+        const endDate = initialResource && initialResource.end ? formatDateUS(new Date(initialResource.end)) : defaultEndDate;
 
         eventFormData.set({
             ...$eventFormData,
@@ -55,14 +60,14 @@
             status: initialResource && initialResource.status ? initialResource.status : '',
             appraised: initialResource && initialResource.appraised ? initialResource.appraised : 0,
             startDate: startDate,
-            endDate: subtractOneDayForDisplay(endDate),
+            endDate: formatDateUS(subtractOneDay(endDate)),
             resourceId: initialResource && initialResource.resourceId ? parseInt(initialResource.resourceId) : null,
             resourceUsername: initialResource && initialResource.resourceUsername ? initialResource.resourceUsername : '',
         });
 
         requestFormData.set({
             ...$requestFormData,
-            requestNewEndDate: subtractOneDayForDisplay(endDate),
+            requestNewEndDate: $eventFormData.endDate,
         });
     });
 
@@ -70,36 +75,19 @@
         $eventFormData.endDate = $eventFormData.startDate;
     }
 
-    function subtractOneDayForDisplay(dateString) {
-        const date = new Date(dateString);
-        date.setDate(date.getDate() - 1);
-        return formatDate(date);
-    }
-
-    function addOneDay(dateString) {
-        const date = new Date(dateString);
-        date.setDate(date.getDate() + 1);
-        return formatDate(date);
-    }
-
-    function formatDate(date) {
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    }
-
     async function handleEventSubmission(event) {
         event.preventDefault();
         const { id, title, startDate, endDate, resourceId, description, status, appraised } = $eventFormData;
+
+        console.log('All data: ', $eventFormData);
 
         if (!title || !startDate || !endDate || !resourceId || !description || !status) {
             notificationStore.set({ message: 'Please fill in all fields', type: 'error' });
             return;
         }
 
-        const actualEndDate = new Date($eventFormData.endDate);
-        const adjustedEndDate = formatDate(actualEndDate);
-        const startDateTime = new Date(startDate);
-        const adjustedStartDate = formatDate(startDateTime);
-        const addedOneDayToEndDate = addOneDay(adjustedEndDate);
+        const adjustedStartDate = formatDateUS(new Date(startDate));
+        const addedOneDayToEndDate = formatDateUS(addOneDay(formatDateUS(new Date($eventFormData.endDate))));
 
         const employee = employees.find(employee => employee.id === resourceId);
         const resourceUsernameFromEmployee = employee.title;
@@ -114,6 +102,8 @@
             appraised,
             resourceUsername: resourceUsernameFromEmployee,
         };
+
+        console.log('eventData', eventData);
 
         if (isEditMode) {
             eventData.id = id;
@@ -139,11 +129,11 @@
             if (!response.ok) {
                 throw new Error(`Error ${isEditMode ? 'updating' : 'creating'} event ` + response.statusText);
             }
+            notificationStore.set({ message: `Event ${isEditMode ? 'updated' : 'created'} successfully!`, type: 'success' });
         } catch (error) {
             notificationStore.set({ message: error.message, type: 'error' });
         } finally {
             closeModal();
-            notificationStore.set({ message: `Event ${isEditMode ? 'updated' : 'created'} successfully!`, type: 'success' });
         }
     }
     function deleteEvent() {
@@ -153,18 +143,15 @@
     async function sendRequest(event) {
         event.stopPropagation();
         try {
-            const { reasonForChange, requestNewEndDate } = $requestFormData;
+            const addedOneDayToEndDate = formatDateUS(addOneDay(formatDateUS(new Date($requestFormData.requestNewEndDate))));
 
-            const actualEndDate = new Date(requestNewEndDate);
-            const adjustedEndDate = formatDate(actualEndDate);
-            const addedOneDayToEndDate = addOneDay(adjustedEndDate);
             const data = {
                 eventId: $eventFormData.id,
                 requesterId: $user.user.id,
                 requesterUsername: $user.user.username,
                 handleStatus: 'pending',
                 handledById: null,
-                reasonForChange: reasonForChange,
+                reasonForChange: $requestFormData.reasonForChange,
                 requestNewEndDate: addedOneDayToEndDate,
             };
 
@@ -213,6 +200,14 @@
 
     function cancelAndCloseModal() {
         showModal = false;
+    }
+
+    function getEmployeeUsernameFromId(resourceId) {
+        if (!resourceId) {
+            return '';
+        }
+        const employee = employees.find(employee => employee.id === resourceId);
+        return employee.title;
     }
 </script>
 
@@ -302,10 +297,11 @@
             {#if $user.user.role === 'user'}
                 <div class="request-div">
                     <div class="request-btn-div">
-                        <button on:click={() => (isCollapseOpen = !isCollapseOpen)}>{isCollapseOpen ? 'Cancel Change Request' : 'Create Change Request'}</button
+                        <button on:click={() => (isCreateChangeRequestOpen = !isCreateChangeRequestOpen)}
+                            >{isCreateChangeRequestOpen ? 'Cancel Change Request' : 'Create Change Request'}</button
                         >
                     </div>
-                    <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
+                    <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCreateChangeRequestOpen}>
                         <div class="requests-div">
                             <h2>Create Change Request</h2>
                             <form on:submit={event => sendRequest(event)}>
@@ -314,6 +310,7 @@
                                     <textarea
                                         class="request-textarea"
                                         id="reason-for-change"
+                                        required
                                         bind:value={$requestFormData.reasonForChange}
                                         placeholder="Enter reason for change"
                                     />
@@ -328,15 +325,57 @@
                     </div>
                 </div>
             {/if}
+            {#if isEditMode}
+                <div class="request-div">
+                    <div class="request-btn-div">
+                        <button on:click={() => (isRequestHistoryOpen = !isRequestHistoryOpen)}
+                            >{isRequestHistoryOpen ? 'Hide Request History' : 'Show Request History'}</button
+                        >
+                    </div>
+                    <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isRequestHistoryOpen}>
+                        <div class="requests-div">
+                            <h2>Request History</h2>
+                            <table class="request-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Request By</th>
+                                        <th>Request Created</th>
+                                        <th>Change Reason</th>
+                                        <th>New End Date</th>
+                                        <th>Handled By</th>
+                                        <th>Handled (Date)</th>
+                                        <th>Reason/Comment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#each eventRequests as request}
+                                        <tr>
+                                            <td>{capitalizeFirstLetter(request.handleStatus)}</td>
+                                            <td>{request.requesterUsername}</td>
+                                            <td>{formatDateEuropean(request.createdAt, true)}</td>
+                                            <td>{request.reasonForChange}</td>
+                                            <td>{formatDateEuropean(subtractOneDay(request.requestNewEndDate), false)}</td>
+                                            <td>{request.handledByUsername}</td>
+                                            <td>{formatDateEuropean(request.handleAt, true)}</td>
+                                            <td>{request.reason}</td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {/if}
         </div>
     </div>
 {/if}
 
 <style>
     .content {
-        width: 40vw;
+        width: 70vw;
         min-width: 250px;
-        max-width: 500px;
+        max-width: 1200px;
         padding: 20px;
         padding-top: 10px;
         background: #2d2d2d;

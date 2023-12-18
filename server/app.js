@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express, { urlencoded } from 'express';
 const app = express();
 
+import pool from './db/mysql/mysqlConnection.js';
+
 app.use(express.json());
 app.use(urlencoded({ extended: true }));
 
@@ -34,7 +36,7 @@ const io = new Server(server, {
     },
 });
 
-import { rateLimit } from 'express-rate-limit';
+// import { rateLimit } from 'express-rate-limit';
 
 // const allRoutesLimiter = rateLimit({
 //     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -59,6 +61,21 @@ app.use(adminRoleRouter(io));
 
 import emailSenderRouter from './emailSender/routers/emailSenderRouter.js';
 app.use(emailSenderRouter);
+
+app.get('/health', async (req, res) => {
+    try {
+        // Attempt to get a connection from the pool
+        const connection = await pool.getConnection();
+        connection.release(); // Release the connection immediately
+
+        // If successful, return a 200 OK response
+        res.status(200).send('OK');
+    } catch (error) {
+        // If there's an error, return a 500 Internal Server Error response
+        console.error('Database Error:', error);
+        res.status(500).send('Database Error');
+    }
+});
 
 app.get('*', (req, res) => {
     res.send('<h1>404 Page not found</h1>');

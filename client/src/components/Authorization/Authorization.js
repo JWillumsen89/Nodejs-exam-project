@@ -1,4 +1,4 @@
-import { BASE_URL } from '../../components/Urls.js';
+import { BASE_URL } from '../../utils/urls.js';
 import { user } from '../../stores/userStore.js';
 
 export async function checkSession() {
@@ -9,9 +9,10 @@ export async function checkSession() {
 
         if (response.ok) {
             const responseData = await response.json();
-            const { id, username, email, role, createdAt, updatedAt } = responseData.data;
+            console.log('responseData:', responseData);
+            const { id, username, email, role, created_at, updated_at } = responseData.data;
 
-            user.set({ isLoggedIn: true, user: { id, username, email, role, createdAt, updatedAt }, avatar: '' });
+            user.set({ isLoggedIn: true, user: { id, username, email, role, created_at, updated_at }, avatar: '' });
         } else if (response.status === 401) {
             user.set({ isLoggedIn: false, user: null, avatar: '' });
         } else {

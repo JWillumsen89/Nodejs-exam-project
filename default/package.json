@@ -1,0 +1,8 @@
+{
+  "name": "default-service",
+  "version": "1.0.0",
+  "description": "Default service for Google Cloud App Engine",
+  "scripts": {
+    "start": "echo 'This is a placeholder default service.'"
+  }
+}

@@ -1,5 +1,5 @@
 <script>
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { writable, get } from 'svelte/store';
     import { user } from '../../stores/userStore.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';

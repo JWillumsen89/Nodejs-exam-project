@@ -1,7 +1,6 @@
 // Import the mysql2 library
 import mysql from 'mysql2';
 
-// Create a connection pool
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,

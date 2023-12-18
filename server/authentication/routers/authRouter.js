@@ -2,10 +2,11 @@ import { Router } from 'express';
 const router = Router();
 
 import { authController } from '../controllers/authController.js';
-import { authRateLimiter } from '../middlewares/authMiddlewares.js';
+// import { authRateLimiter } from '../middlewares/authMiddlewares.js';
 
 export default function (io) {
-    router.post('/auth/login', authRateLimiter, async (req, res) => {
+    // router.post('/auth/login', authRateLimiter, async (req, res) => {
+    router.post('/auth/login', async (req, res) => {
         try {
             await authController.login(req, req.body);
             delete req.body.password;
@@ -23,7 +24,8 @@ export default function (io) {
         }
     });
 
-    router.post('/auth/signup', authRateLimiter, async (req, res) => {
+    // router.post('/auth/signup', authRateLimiter, async (req, res) => {
+    router.post('/auth/signup', async (req, res) => {
         try {
             const createdUser = await authController.signUp(req.body);
             delete createdUser.hashedPassword;
@@ -35,7 +37,8 @@ export default function (io) {
         }
     });
 
-    router.post('/auth/logout', authRateLimiter, (req, res) => {
+    // router.post('/auth/logout', authRateLimiter, (req, res) => {
+    router.post('/auth/logout', (req, res) => {
         req.session.destroy(err => {
             if (err) {
                 return res.status(500).send('Error while logging out');

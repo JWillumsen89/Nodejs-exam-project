@@ -58,7 +58,7 @@ export default function (io) {
 
     router.get('/admin/get-event/:eventId', isAuthenticated, requireRole(['admin']), async (req, res) => {
         try {
-            const eventId = req.params.eventId; // Access the path parameter
+            const eventId = req.params.eventId;
 
             const event = await authorizationController.getEvent(eventId);
             res.send({ data: { event: event } });
@@ -75,9 +75,6 @@ export default function (io) {
     router.put('/admin/update-event-request/:eventRequestId', isAuthenticated, requireRole(['admin']), async (req, res) => {
         try {
             const { eventRequestId } = req.params;
-
-            console.log('eventRequestId', eventRequestId);
-            console.log('req.body', req.body);
 
             const request = await authorizationController.updateEventRequest(eventRequestId, req.body);
 

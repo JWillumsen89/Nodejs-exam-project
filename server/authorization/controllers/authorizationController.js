@@ -56,4 +56,8 @@ export const authorizationController = {
         const updatedRequest = await authorizationService.updateEventRequest(eventRequestId, request);
         return updatedRequest;
     },
+    async getAllEventRequestsById(eventId) {
+        const requests = await authorizationService.getAllEventRequestsById(eventId);
+        return requests;
+    }
 };

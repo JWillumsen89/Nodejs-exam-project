@@ -47,5 +47,14 @@ export default function (io) {
         }
     });
 
+    router.get('/user/get-all-event-requests-by-id/:eventId', isAuthenticated, requireRole(['user']), async (req, res) => {
+        try {
+            const requests = await authorizationController.getAllEventRequestsById(req.params.eventId);
+            res.send({ data: requests });
+        } catch (error) {
+            res.status(400).send({ error: error.message });
+        }
+    });
+
     return router;
 }

@@ -3,7 +3,7 @@
     import { user } from '../../stores/userStore.js';
     import { get, writable } from 'svelte/store';
     import { notificationStore } from '../../stores/notificationStore.js';
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
 
     export let isOpen;
     export let title;

@@ -1,11 +1,11 @@
 <script>
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { onMount } from 'svelte';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
-    import { formatEuropeanDate } from '../../components/dateFormat.js';
+    import { formatDateEuropean } from '../../utils/dateFormatting.js';
     import io from 'socket.io-client';
-    const socket = io('http://localhost:3000');
+    const socket = io(BASE_URL);
 
     $: pageTitle.set('Admin Panel'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -86,8 +86,8 @@
                 <tr>
                     <td>{user.username}</td>
                     <td>{user.email}</td>
-                    <td>{formatEuropeanDate(user.created_at)}</td>
-                    <td>{formatEuropeanDate(user.updated_at)}</td>
+                    <td>{formatDateEuropean(user.created_at, true)}</td>
+                    <td>{formatDateEuropean(user.updated_at, true)}</td>
                 </tr>
             {/each}
         </tbody>

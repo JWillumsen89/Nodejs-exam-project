@@ -1,0 +1,16 @@
+runtime: nodejs
+env: flex
+
+service: client
+
+runtime_config:
+    operating_system: 'ubuntu22'
+    runtime_version: '20'
+
+handlers:
+    - url: /
+      static_files: dist/index.html
+      upload: dist/index.html
+
+    - url: /
+      static_dir: dist

@@ -1,0 +1,28 @@
+runtime: nodejs
+env: flex
+
+service: server
+
+automatic_scaling:
+    min_num_instances: 1
+    max_num_instances: 2
+
+env_variables:
+    NODE_ENV: 'production'
+    SESSION_SECRET: '77df6cebe536cd3aa515887b93d80aec607908b699405fc07a28d96d294c1a11'
+    ETHEREAL_USER: 'amely11@ethereal.email'
+    ETHEREAL_PASSWORD: 'rHCKHbb5KpnWvJvEmW'
+    MYSQL_HOST: 34.118.111.16
+    MYSQL_USER: root
+    MYSQL_PASSWORD: Bowie2018
+    MYSQL_DATABASE: workplanner
+
+entrypoint: node app.js
+
+readiness_check:
+    path: '/health'
+    check_interval_sec: 5
+    timeout_sec: 4
+    failure_threshold: 2
+    success_threshold: 2
+

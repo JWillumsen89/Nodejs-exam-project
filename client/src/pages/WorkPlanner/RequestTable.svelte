@@ -1,65 +1,47 @@
 <script>
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
-    import { faCheck, faX, faCircle } from '@fortawesome/free-solid-svg-icons';
+    import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
     import { user } from '../../stores/userStore.js';
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { Modals, openModal, closeModal } from 'svelte-modals';
-    import RejectionReasonModal from './RejectionReasonModal.svelte';
+    import ReasonModal from './ReasonModal.svelte';
+    import { formatDateEuropean, formatDateUS, addOneDay, subtractOneDay } from '../../utils/dateFormatting.js';
+    import { capitalizeFirstLetter } from '../../utils/stringFormatting.js';
+    import { notificationStore } from '../../stores/notificationStore.js';
 
     export let requests = [];
     export let goToEvent;
     export let getEmployeeUsernameFromId;
     export let openEventModalFromRequestsList;
+    export let allEvents;
     export let type;
 
-    async function updateEventRequestStatus(eventRequestId, status, reasonForRejection) {
-        console.log('updateEventRequestStatus', eventRequestId, status, reasonForRejection);
+    let event = null;
 
+    async function updateEventRequestStatus(eventRequestId, status, reason, handledByUsername) {
         const data = {
             handledById: $user.user.id,
             status,
+            reason,
+            handledByUsername,
         };
 
-        if (status === 'rejected') {
-            data.reasonForRejection = reasonForRejection;
+        try {
+            const response = await fetch(BASE_URL + `/admin/update-event-request/${eventRequestId}`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error updating event: ${response.statusText}`);
+            }
+        } catch (error) {
+            throw error;
         }
-
-        const res = await fetch(BASE_URL + `/admin/update-event-request/${eventRequestId}`, {
-            method: 'PUT',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-
-        if (res.status === 200) {
-            const updatedEventRequest = await res.json();
-            console.log(updatedEventRequest);
-        } else {
-            console.log('Error updating event request status');
-        }
-    }
-
-    function formatDate(dateString, withTime) {
-        const date = new Date(dateString);
-
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-
-        if (withTime) {
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-
-            return `${day}/${month}-${year} ${hours}:${minutes}`;
-        } else {
-            return `${day}/${month}-${year}`;
-        }
-    }
-
-    function handleRejectionReason(eventRequestId, reason) {
-        updateEventRequestStatus(eventRequestId, 'rejected', reason);
     }
 
     function handleBackdropClick() {
@@ -72,14 +54,57 @@
         }
     }
 
-    async function openRejectionReasonModal(eventRequestId) {
-        openModal(RejectionReasonModal, {
-            onSubmit: reason => handleRejectionReason(eventRequestId, reason),
+    async function openReasonCommentModal(type, request) {
+        event = allEvents.find(event => event.id === request.eventId);
+        console.log('all data', type, request, event);
+        openModal(ReasonModal, {
+            onSubmit: data => handleUpdates(request.id, type, data.reason, data.newEndDate, data.handledByUsername),
+            type,
+            event,
+            request,
         });
     }
 
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
+    async function handleUpdates(eventRequestId, type, reason, newEndDate, handledByUsername) {
+        console.log('All parameters', eventRequestId, type, reason, newEndDate, handledByUsername);
+        console.log('event', event);
+
+        try {
+            if (type === 'approved') {
+                await updateEvent(newEndDate);
+                updateEventRequestStatus(eventRequestId, type, reason, handledByUsername);
+            } else {
+                updateEventRequestStatus(eventRequestId, type, reason, handledByUsername);
+            }
+            notificationStore.set({ message: `Update successful!`, type: 'success' });
+        } catch (error) {
+            console.error('Error handling updates:', error);
+            notificationStore.set({ message: error.message, type: 'error' });
+        } finally {
+            closeModal();
+        }
+    }
+
+    async function updateEvent(newEndDate) {
+        event.start = formatDateUS(new Date(event.start));
+        event.end = formatDateUS(new Date(newEndDate));
+
+        try {
+            const response = await fetch(BASE_URL + '/admin/update-event', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(event),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error updating event: ${response.statusText}`);
+            }
+        } catch (error) {
+            throw error;
+        }
     }
 </script>
 
@@ -95,11 +120,10 @@
                 <th>Event Title</th>
                 <th>Event Details</th>
                 <th>Go To Event</th>
-                <th>Handled By</th>
-                <th>Handled (Date)</th>
-                <th>Rejection Reason</th>
-
-                <th>Approve/Reject</th>
+                <th>{type === 'pending' ? '-' : 'Handled By'}</th>
+                <th>{type === 'pending' ? '-' : 'Handled (Date)'}</th>
+                <th>{type === 'rejected' ? 'Rejection Reason' : type === 'approved' ? 'Approval Comment' : '-'}</th>
+                <th>{type === 'rejected' ? 'Rejected' : type === 'approved' ? 'Approved' : 'Approve/Reject'}</th>
             </tr>
         </thead>
         <tbody>
@@ -107,9 +131,9 @@
                 <tr>
                     <td>{capitalizeFirstLetter(request.handleStatus)}</td>
                     <td>{request.requesterUsername}</td>
-                    <td>{formatDate(request.createdAt, true)}</td>
+                    <td>{formatDateEuropean(request.createdAt, true)}</td>
                     <td>{request.reasonForChange}</td>
-                    <td>{formatDate(request.requestNewEndDate, false)}</td>
+                    <td>{formatDateEuropean(subtractOneDay(request.requestNewEndDate), false)}</td>
                     <td>{request.eventTitle}</td>
                     <td><button class="table-btn" on:click={() => openEventModalFromRequestsList(request.eventId)}>Event Details</button></td>
                     <td><button class="table-btn" on:click={() => goToEvent(request.eventId)}>Go To Event</button></td>
@@ -117,28 +141,26 @@
                         <td></td>
                         <td></td>
                     {:else}
-                        <td>{getEmployeeUsernameFromId(request.handledById)}</td>
-                        <td>{formatDate(request.handleAt, true)}</td>
+                        <td>{request.handledByUsername}</td>
+                        <td>{formatDateEuropean(request.handleAt, true)}</td>
                     {/if}
-                    {#if type === 'rejected'}
-                        <td>{request.reasonForRejection}</td>
-                    {:else}
-                        <td></td>
-                    {/if}
+                    <td>{(type === 'rejected' || type === 'approved') && request.reasonForRejection !== null ? request.reasonForRejection : ''}</td>
 
                     {#if type === 'pending'}
                         <td>
                             <div class="approve-reject-group">
-                                <button class="approve-btn" on:click={() => updateEventRequestStatus(request.id, 'approved')}
+                                <button class="approve-btn" on:click={() => openReasonCommentModal('approved', request)}
                                     ><FontAwesomeIcon icon={faCheck} size="lg" />
                                 </button>
-                                <button class="reject-btn" on:click={() => openRejectionReasonModal(request.id)}>
+                                <button class="reject-btn" on:click={() => openReasonCommentModal('rejected', request)}>
                                     <FontAwesomeIcon icon={faX} size="lg" /></button
                                 >
                             </div>
                         </td>
-                    {:else}
-                        <td></td>
+                    {:else if type === 'approved'}
+                        <td><FontAwesomeIcon icon={faCheck} size="lg" /></td>
+                    {:else if type === 'rejected'}
+                        <td><FontAwesomeIcon icon={faX} size="lg" /></td>
                     {/if}
                     <Modals>
                         <div
@@ -156,12 +178,12 @@
         </tbody>
     </table>
 {:else}
-    <p>No requests.</p>
+    <p class="no-requests">No requests.</p>
 {/if}
 
 <style>
     .request-table tr:hover td {
-        background-color: #4a4a4a; /* Hover color for all cells */
+        background-color: #4a4a4a;
     }
 
     .request-table {
@@ -202,6 +224,9 @@
         background-color: #414141;
     }
 
+    .no-requests {
+        font-weight: bold;
+    }
     .approve-reject-group {
         display: flex;
         justify-content: center;

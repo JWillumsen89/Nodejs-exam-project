@@ -5,7 +5,7 @@
     import { Link } from 'svelte-navigator';
     import { user } from '../../stores/userStore.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { useNavigate } from 'svelte-navigator';
     import { notificationStore } from '../../stores/notificationStore.js';
 
@@ -176,14 +176,14 @@
 
     @media (max-width: 1024px) {
         .page-title {
-            font-size: 3em;
+            font-size: 2em;
         }
     }
     @media (max-width: 768px) {
         .page-title {
             z-index: 10;
             margin-top: -10px;
-            font-size: 2em;
+            font-size: 1.5em;
         }
         .header {
             position: relative;
@@ -208,8 +208,8 @@
             margin: 0.5rem auto;
         }
         .avatar {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
         }
     }
 </style>

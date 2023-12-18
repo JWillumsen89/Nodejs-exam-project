@@ -1,8 +1,9 @@
 <script>
     // @ts-nocheck
 
+    import { BASE_URL } from '../../utils/urls.js';
     import io from 'socket.io-client';
-    const socket = io('http://localhost:3000');
+    const socket = io(BASE_URL);
     import FullCalendar from 'svelte-fullcalendar';
     import interactionPlugin from '@fullcalendar/interaction';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
@@ -13,11 +14,11 @@
     import { onMount, onDestroy } from 'svelte';
     import { writable } from 'svelte/store';
     import { user } from '../../stores/userStore.js';
-    import { BASE_URL } from '../../components/Urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
     import 'material-icons/iconfont/material-icons.css';
     import { slide } from 'svelte/transition';
     import { tick } from 'svelte';
+    import { formatDateUS } from '../../utils/dateFormatting.js';
 
     import EventModal from './EventModal.svelte';
     import SearchResultModal from './SearchResultModal.svelte';
@@ -33,9 +34,16 @@
     let resources;
     let selectedResourceIds = [];
     let pendingRequests = [];
+    let filteredPendingRequests = [];
     let approvedRequests = [];
+    let filteredApprovedRequests = [];
     let rejectedRequests = [];
+    let filteredRejectedRequests = [];
     let isCollapseOpen = false;
+    let isPendingOpen = false;
+    let isApprovedOpen = false;
+    let isRejectedOpen = false;
+    let searchInput = '';
 
     const requestCount = writable(0);
 
@@ -192,6 +200,7 @@
                 classNames: `event-${event.status}`,
             }));
             allEvents = transformedData;
+            console.log('all events', allEvents);
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
@@ -273,10 +282,6 @@
         goToEvent(eventId);
     }
 
-    function formatDate(date) {
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    }
-
     function getEmployeeUsernameFromId(resourceId) {
         if (!resourceId) {
             return '';
@@ -286,6 +291,7 @@
     }
 
     async function updateEventInDatabase(eventInfo, calendarApi) {
+        console.log(eventInfo.event);
         const event = calendarApi.getEventById(eventInfo.event.id);
 
         const resourceId = parseInt(event.getResources().map(resource => resource.id)[0]);
@@ -295,14 +301,16 @@
         const updatedEvent = {
             id: event.id,
             title: event.title,
-            start: formatDate(event.start),
-            end: formatDate(event.end),
+            start: formatDateUS(event.start),
+            end: formatDateUS(event.end),
             resourceId: resourceId,
             description: event.extendedProps.description,
             status: event.extendedProps.status,
             appraised: event.extendedProps.appraised,
             resourceUsername: resourceUsernameFromEmployee,
         };
+
+        console.log('updated event', updatedEvent);
 
         try {
             const response = await fetch(BASE_URL + '/admin/update-event', {
@@ -367,7 +375,7 @@
         eventResourceEditable: $user.user.role === 'admin',
         eventDrop: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
         eventResize: $user.user.role === 'admin' ? eventInfo => updateEventInDatabase(eventInfo, calendarApi) : null,
-        eventClick: function (clickInfo) {
+        eventClick: async function (clickInfo) {
             const event = clickInfo.event;
             const resourceIds = event._def.resourceIds;
 
@@ -387,6 +395,7 @@
                 initialResource: eventData,
                 employees: allResources,
                 isEditMode: true,
+                eventRequests: await getAllEventRequestsById(event.id),
             });
         },
         selectable: $user.user.role === 'admin',
@@ -576,7 +585,63 @@
             initialResource: eventData,
             employees: allResources,
             isEditMode: true,
+            eventRequests: await getAllEventRequestsById(eventId),
         });
+    }
+
+    async function getAllEventRequestsById(eventId) {
+        try {
+            let response = await fetch(BASE_URL + `/user/get-all-event-requests-by-id/${eventId}`, {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const result = await response.json();
+
+            return result.data;
+        } catch (error) {
+            notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
+        }
+    }
+
+    $: {
+        if (searchInput.trim()) {
+            const searchValue = searchInput.trim().toLowerCase();
+            filteredRejectedRequests = rejectedRequests.filter(
+                request =>
+                    request.requesterUsername.toLowerCase().includes(searchValue) ||
+                    request.reasonForChange.toLowerCase().includes(searchValue) ||
+                    request.eventTitle.toLowerCase().includes(searchValue) ||
+                    request.reasonForRejection.toLowerCase().includes(searchValue) ||
+                    getEmployeeUsernameFromId(request.handledById)?.toLowerCase().includes(searchValue) ||
+                    false
+            );
+            filteredApprovedRequests = approvedRequests.filter(
+                request =>
+                    request.requesterUsername.toLowerCase().includes(searchValue) ||
+                    request.reasonForChange.toLowerCase().includes(searchValue) ||
+                    request.eventTitle.toLowerCase().includes(searchValue) ||
+                    request.reasonForRejection.toLowerCase().includes(searchValue) ||
+                    getEmployeeUsernameFromId(request.handledById)?.toLowerCase().includes(searchValue) ||
+                    false
+            );
+            filteredPendingRequests = pendingRequests.filter(
+                request =>
+                    request.requesterUsername.toLowerCase().includes(searchValue) ||
+                    request.reasonForChange.toLowerCase().includes(searchValue) ||
+                    request.eventTitle.toLowerCase().includes(searchValue) ||
+                    request.reasonForRejection.toLowerCase().includes(searchValue) ||
+                    getEmployeeUsernameFromId(request.handledById)?.toLowerCase().includes(searchValue) ||
+                    false
+            );
+        } else {
+            filteredRejectedRequests = rejectedRequests;
+            filteredApprovedRequests = approvedRequests;
+            filteredPendingRequests = pendingRequests;
+        }
     }
 </script>
 
@@ -684,14 +749,60 @@
     </div>
     <div in:slide={{ duration: 300 }} class="collapsible-content" class:visible={isCollapseOpen}>
         <div id="requests-div" class="requests-div">
-            <h4 class="request-header pending-requests-header">Pending Requests</h4>
-            <RequestTable type="pending" requests={pendingRequests} {goToEvent} {getEmployeeUsernameFromId} {openEventModalFromRequestsList} />
+            <input id="request-search-field" type="text" placeholder="Search Requests..." bind:value={searchInput} />
+            <div class="request-section">
+                <h4 class="request-header pending-requests-header">Pending Requests</h4>
+                <button class="toggle-button pending-toggle" on:click={() => (isPendingOpen = !isPendingOpen)}
+                    >{isPendingOpen ? 'Hide Pending Requests' : 'Show Pending Requests'}</button
+                >
+            </div>
+            {#if isPendingOpen}
+                <div in:slide={{ duration: 300 }}>
+                    <RequestTable
+                        type="pending"
+                        requests={filteredPendingRequests}
+                        {goToEvent}
+                        {getEmployeeUsernameFromId}
+                        {openEventModalFromRequestsList}
+                        {allEvents}
+                    />
+                </div>
+            {/if}
+            <div class="request-section">
+                <h4 class="request-header approved-requests-header">Approved Requests</h4>
+                <button class="toggle-button approved-toggle" on:click={() => (isApprovedOpen = !isApprovedOpen)}
+                    >{isApprovedOpen ? 'Hide Approved Requests' : 'Show Approved Requests'}</button
+                >
+            </div>
+            {#if isApprovedOpen}
+                <div in:slide={{ duration: 300 }}>
+                    <RequestTable
+                        type="approved"
+                        requests={filteredApprovedRequests}
+                        {goToEvent}
+                        {getEmployeeUsernameFromId}
+                        {openEventModalFromRequestsList}
+                    />
+                </div>
+            {/if}
 
-            <h4 class="request-header approved-requests-header">Approved Requests</h4>
-            <RequestTable type="approved" requests={approvedRequests} {goToEvent} {getEmployeeUsernameFromId} {openEventModalFromRequestsList} />
-
-            <h4 class="request-header rejected-requests-header">Rejected Requests</h4>
-            <RequestTable type="rejected" requests={rejectedRequests} {goToEvent} {getEmployeeUsernameFromId} {openEventModalFromRequestsList} />
+            <div class="request-section">
+                <h4 class="request-header rejected-requests-header">Rejected Requests</h4>
+                <button class="toggle-button rejected-toggle" on:click={() => (isRejectedOpen = !isRejectedOpen)}
+                    >{isRejectedOpen ? 'Hide Rejected Requests' : 'Show Rejected Requests'}</button
+                >
+            </div>
+            {#if isRejectedOpen}
+                <div in:slide={{ duration: 300 }}>
+                    <RequestTable
+                        type="rejected"
+                        requests={filteredRejectedRequests}
+                        {goToEvent}
+                        {getEmployeeUsernameFromId}
+                        {openEventModalFromRequestsList}
+                    />
+                </div>
+            {/if}
         </div>
     </div>
     <div id="my-fullcalendar">
@@ -866,6 +977,10 @@
         margin-top: 40px;
     }
 
+    .header-controls button {
+        height: 40px;
+    }
+
     .select-and-clear {
         display: flex;
         flex-direction: row;
@@ -948,6 +1063,37 @@
     }
 
     .rejected-requests-header {
+        background-color: #f44336;
+        color: #fff;
+    }
+
+    .request-section {
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+    }
+
+    .toggle-button {
+        padding: 5px 10px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+        margin-left: 10px;
+        margin-bottom: 15px;
+    }
+
+    .pending-toggle {
+        background-color: #ff9500;
+        color: #2d2d2d;
+    }
+
+    .approved-toggle {
+        background-color: #4caf50;
+        color: #fff;
+    }
+
+    .rejected-toggle {
         background-color: #f44336;
         color: #fff;
     }

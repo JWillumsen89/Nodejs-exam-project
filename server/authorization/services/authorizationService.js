@@ -1,6 +1,6 @@
 import { getAllUsersWithUserRole, getAllUsers, checkAndChangePassword, editProfile } from '../../db/mysql/usersMysql.js';
 import { getAllEvents, createEvent, getEventsForUser, updateEvent, userUpdateEvent, deleteEvent, getEvent } from '../../db/mysql/eventsMysql.js';
-import { createEventRequest, getAllEventRequests, updateEventRequest } from '../../db/mysql/eventRequestsMysql.js';
+import { createEventRequest, getAllEventRequests, updateEventRequest, getAllEventRequestsById } from '../../db/mysql/eventRequestsMysql.js';
 
 export const authorizationService = {
     async getAllUsersWithUserRole() {
@@ -56,5 +56,9 @@ export const authorizationService = {
     async updateEventRequest(eventRequestId, request) {
         const updatedRequest = await updateEventRequest(eventRequestId, request);
         return updatedRequest;
+    },
+    async getAllEventRequestsById(eventId) {
+        const requests = await getAllEventRequestsById(eventId);
+        return requests;
     },
 };

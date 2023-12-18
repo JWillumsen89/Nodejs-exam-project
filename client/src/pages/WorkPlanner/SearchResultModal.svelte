@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import { slide } from 'svelte/transition';
     import { user } from '../../stores/userStore.js';
+    import { formatDateEuropean, subtractOneDay, addOneDay } from '../../utils/dateFormatting.js';
 
     export let isOpen;
     export let allEvents;
@@ -21,29 +22,6 @@
     let searchAppraised = null;
     let searchInitiated = false;
     let isCollapseOpen = false;
-
-    onMount(() => {});
-
-    function formatDate(date) {
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    }
-    function formatDateSubtractOneDay(date) {
-        date = new Date(date);
-        date.setDate(date.getDate() - 1);
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    }
-
-    function subtractOneDay(dateString) {
-        const date = new Date(dateString);
-        date.setDate(date.getDate() - 1);
-        return date;
-    }
-
-    function addOneDay(dateString) {
-        const date = new Date(dateString);
-        date.setDate(date.getDate() + 1);
-        return date;
-    }
 
     // @ts-ignore
     $: searchInitiated =
@@ -249,8 +227,8 @@
                                 {#each searchResults as result, index}
                                     <tr>
                                         <td>{result.title}</td>
-                                        <td>{formatDate(new Date(result.start))}</td>
-                                        <td>{formatDateSubtractOneDay(new Date(result.end))}</td>
+                                        <td>{formatDateEuropean(new Date(result.start))}</td>
+                                        <td>{formatDateEuropean(subtractOneDay(result.end))}</td>
                                         <td>{resourceName(result)}</td>
                                         <td>{displayStatus(result.status)}</td>
                                         <td>

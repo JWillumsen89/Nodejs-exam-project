@@ -1,5 +1,5 @@
 <script>
-    import { BASE_URL } from '../../components/Urls.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
     import { navigate } from 'svelte-navigator';
     import { pageTitle } from '../../stores/pageTitleStore.js';
