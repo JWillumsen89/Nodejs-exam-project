@@ -25,9 +25,8 @@ export async function getAllEventRequests() {
 
 export async function createEventRequest(eventRequest) {
     try {
-        console.log('eventRequest', eventRequest);
         const [result] = await pool.execute(
-            `INSERT INTO event_requests (event_id, requester_id, requester_username, handle_status, handled_by_id, reason_for_change, request_new_end_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO event_requests (event_id, requester_id, requester_username, handle_status, handled_by_id, reason_for_change, request_new_end_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 eventRequest.eventId,
                 eventRequest.requesterId,
@@ -37,9 +36,9 @@ export async function createEventRequest(eventRequest) {
                 eventRequest.reasonForChange,
                 eventRequest.requestNewEndDate,
                 new Date(),
+                new Date(),
             ]
         );
-        console.log('result', result);
         return result;
     } catch (error) {
         console.log('error', error);
@@ -49,10 +48,9 @@ export async function createEventRequest(eventRequest) {
 
 export async function updateEventRequest(eventRequestId, request) {
     try {
-        console.log('request', request);
         const [result] = await pool.execute(
-            `UPDATE event_requests SET handle_status = ?, handled_by_id = ?, handled_at = ?, reason = ?, handled_by_username = ? WHERE id = ?`,
-            [request.status, request.handledById, new Date(), request.reason, request.handledByUsername, eventRequestId]
+            `UPDATE event_requests SET handle_status = ?, handled_by_id = ?, handled_at = ?, reason = ?, handled_by_username = ?, updated_at = ? WHERE id = ?`,
+            [request.status, request.handledById, new Date(), request.reason, request.handledByUsername, new Date(), eventRequestId]
         );
         return result;
     } catch (error) {

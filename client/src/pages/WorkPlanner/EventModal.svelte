@@ -21,6 +21,7 @@
     let isRequestHistoryOpen = false;
     let isUser = false;
     let showModal = false;
+    let initialDescription = '';
 
     if ($user.user.role === 'user') {
         isUser = true;
@@ -51,6 +52,8 @@
 
         const startDate = initialResource && initialResource.start ? formatDateUS(new Date(initialResource.start)) : defaultStartDate;
         const endDate = initialResource && initialResource.end ? formatDateUS(new Date(initialResource.end)) : defaultEndDate;
+
+        initialDescription = initialResource && initialResource.description ? initialResource.description : '';
 
         eventFormData.set({
             ...$eventFormData,
@@ -103,10 +106,16 @@
             resourceUsername: resourceUsernameFromEmployee,
         };
 
-        console.log('eventData', eventData);
-
         if (isEditMode) {
             eventData.id = id;
+        }
+
+        const descriptionChanged = $eventFormData.description !== initialDescription;
+
+        if ($user.user.role === 'user' && descriptionChanged) {
+            eventData.userUpdate = true;
+        } else {
+            eventData.userUpdate = false;
         }
 
         try {

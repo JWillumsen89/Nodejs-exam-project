@@ -198,6 +198,7 @@
                 appraised: event.appraised,
                 resourceUsername: event.resource_username,
                 classNames: `event-${event.status}`,
+                userUpdate: event.user_update,
             }));
             allEvents = transformedData;
             console.log('all events', allEvents);
@@ -331,6 +332,33 @@
         }
     }
 
+    function goToNext() {
+        let currentDate = calendarApi.getDate();
+        if (calendarApi.view.type.includes('Week')) {
+            // Move by one week
+            let nextDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 7);
+            calendarApi.gotoDate(nextDate);
+        } else if (calendarApi.view.type.includes('Month')) {
+            // Move by one month
+            let nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate());
+            calendarApi.gotoDate(nextMonth);
+        }
+    }
+
+    // Custom function to navigate based on current view
+    function goToPrev() {
+        let currentDate = calendarApi.getDate();
+        if (calendarApi.view.type.includes('Week')) {
+            // Move by one week
+            let prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 7);
+            calendarApi.gotoDate(prevDate);
+        } else if (calendarApi.view.type.includes('Month')) {
+            // Move by one month
+            let prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
+            calendarApi.gotoDate(prevMonth);
+        }
+    }
+
     $: options = {
         plugins: [resourceTimelinePlugin, interactionPlugin],
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
@@ -340,33 +368,48 @@
         views: {
             resourceTimelineWeek: {
                 type: 'resourceTimeline',
-                buttonText: 'Uge',
+                buttonText: 'Week',
             },
             twoWeeksTimeline: {
                 type: 'resourceTimeline',
                 duration: { weeks: 2 },
-                buttonText: '2 Uger',
+                buttonText: '2 Weeks',
             },
             threeWeeksTimeline: {
                 type: 'resourceTimeline',
                 duration: { weeks: 3 },
-                buttonText: '3 Uger',
+                buttonText: '3 Weeks',
             },
             resourceTimelineMonth: {
                 type: 'resourceTimeline',
                 duration: { months: 1 },
-                buttonText: 'Måned',
+                buttonText: 'Month',
             },
         },
         buttonText: {
-            today: 'I dag',
+            today: 'Today',
         },
+        // headerToolbar: {
+        //     left: 'prev,next today',
+        //     center: 'title',
+        //     right: 'resourceTimelineWeek,twoWeeksTimeline,threeWeeksTimeline,resourceTimelineMonth',
+        // },
         headerToolbar: {
-            left: 'prev,next today',
+            left: 'customPrev,customNext today',
             center: 'title',
             right: 'resourceTimelineWeek,twoWeeksTimeline,threeWeeksTimeline,resourceTimelineMonth',
         },
-        locale: 'da',
+        customButtons: {
+            customPrev: {
+                text: '<',
+                click: goToPrev,
+            },
+            customNext: {
+                text: '>',
+                click: goToNext,
+            },
+        },
+        locale: 'en',
         firstDay: 1,
         hiddenDays: [0, 6],
         editable: $user.user.role === 'admin',
@@ -478,11 +521,31 @@
                 element.appendChild(iconElement);
             }
 
+            if ($user.user.role === 'admin' && arg.event.extendedProps.userUpdate === 1) {
+                const notification = document.createElement('div');
+                notification.innerHTML = '!';
+                notification.style.position = 'absolute';
+                notification.style.top = '-10px';
+                notification.style.right = '-10px';
+                notification.style.width = '25px';
+                notification.style.height = '25px';
+                notification.style.backgroundColor = 'red';
+                notification.style.color = 'white';
+                notification.style.borderRadius = '50%';
+                notification.style.display = 'flex';
+                notification.style.alignItems = 'center';
+                notification.style.justifyContent = 'center';
+                notification.style.fontWeight = 'bold';
+                notification.style.cursor = 'pointer';
+
+                element.appendChild(notification);
+            }
+
             return { domNodes: [element] };
         },
 
         slotLabelFormat: getSlotLabelFormat(window.innerWidth),
-        resourceAreaHeaderContent: 'Smede:',
+        resourceAreaHeaderContent: 'Employees:',
         slotDuration: { days: 1 },
         resourceAreaWidth: '190px',
         displayEventTime: false,

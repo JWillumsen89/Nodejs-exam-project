@@ -11,7 +11,6 @@
 
     export let requests = [];
     export let goToEvent;
-    export let getEmployeeUsernameFromId;
     export let openEventModalFromRequestsList;
     export let allEvents;
     export let type;

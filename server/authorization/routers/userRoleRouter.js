@@ -17,13 +17,18 @@ export default function (io) {
 
     router.post('/user/update-event', isAuthenticated, requireRole(['user']), async (req, res) => {
         try {
-            const { description, status, appraised, id } = req.body;
+            const { description, status, appraised, id, userUpdate } = req.body;
+            //If userUpdate is not defined, set userUpdate to false
+            if (userUpdate === undefined) {
+                userUpdate = false;
+            }
 
             const updateData = {
                 description,
                 status,
                 appraised,
                 id,
+                userUpdate,
             };
             const event = await authorizationController.userUpdateEvent(updateData);
 

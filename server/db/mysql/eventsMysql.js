@@ -44,8 +44,14 @@ export async function updateEvent(event) {
 
 export async function userUpdateEvent(event) {
     try {
-        const { description, status, appraised, id } = event;
-        const [result] = await pool.execute(`UPDATE events SET description = ?, status = ?, appraised = ? WHERE id = ?`, [description, status, appraised, id]);
+        const { description, status, appraised, id, userUpdate } = event;
+        const [result] = await pool.execute(`UPDATE events SET description = ?, status = ?, appraised = ?, user_update = ? WHERE id = ?`, [
+            description,
+            status,
+            appraised,
+            userUpdate,
+            id,
+        ]);
         return result;
     } catch (error) {
         throw error;
