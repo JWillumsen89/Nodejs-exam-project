@@ -2,6 +2,7 @@ import { Router } from 'express';
 const router = Router();
 
 import { isAuthenticated } from '../../authentication/middlewares/authMiddlewares.js';
+
 import { authorizationController } from '../controllers/authorizationController.js';
 
 export default function (io) {
@@ -20,7 +21,7 @@ export default function (io) {
             const userIdFromSession = req.session.user.id;
             const updatedUserData = await authorizationController.editProfile(req.body, userIdFromSession);
             req.session.user = updatedUserData;
-            io.emit('user_updated', { user: updatedUserData });
+            io.emit('user_changed', { user: updatedUserData });
             res.send({ data: { message: 'Profile edited successfully', user: updatedUserData } });
         } catch (error) {
             res.status(400).send({ error: error.message });

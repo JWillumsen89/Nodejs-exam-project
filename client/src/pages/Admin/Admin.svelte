@@ -9,36 +9,15 @@
 
     $: pageTitle.set('Admin Panel'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
-    let adminData = [];
     let errorMessage = '';
     let userList = [];
     let sortedUserList = [];
 
     onMount(async () => {
-        try {
-            const response = await fetch(BASE_URL + '/admin/data', {
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-
-            const result = await response.json();
-            adminData = result.data;
-        } catch (error) {
-            console.error('Fetch error:', error);
-            errorMessage = error.message || 'Failed to fetch data';
-        }
-
         await fetchAllUsersWithUserRole();
     });
 
-    socket.on('user_signup', async () => {
-        await fetchAllUsersWithUserRole();
-    });
-
-    socket.on('user_updated', async () => {
+    socket.on('user_changed', async () => {
         await fetchAllUsersWithUserRole();
     });
 
@@ -65,12 +44,6 @@
 </script>
 
 <div class="content">
-    {#if adminData.length > 0}
-        <h3 class="admin-data">{adminData}</h3>
-    {:else}
-        <p class="error-message">{errorMessage || 'No data available'}</p>
-    {/if}
-
     <h2 class="users-title">Users List</h2>
     <table>
         <thead>

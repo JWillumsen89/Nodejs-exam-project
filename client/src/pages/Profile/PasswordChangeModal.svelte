@@ -1,7 +1,7 @@
 <script>
     import { closeModal } from 'svelte-modals';
     import { user } from '../../stores/userStore.js';
-    import { get, writable } from 'svelte/store';
+    import { get } from 'svelte/store';
     import { notificationStore } from '../../stores/notificationStore.js';
     import { BASE_URL } from '../../utils/urls.js';
 

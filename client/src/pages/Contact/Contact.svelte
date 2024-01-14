@@ -48,55 +48,6 @@
         }
     }
 
-    // let username = '';
-    // let email = '';
-
-    // $: if ($user.isLoggedIn) {
-    //     username = $user.user.username;
-    //     email = $user.user.email;
-    // }
-
-    // let isSubmitting = false;
-
-    // async function handleContactSubmit(event) {
-    //     event.preventDefault();
-    //     isSubmitting = true;
-
-    //     const data = {
-    //         name: event.target.name.value,
-    //         email: event.target.email.value,
-    //         subject: event.target.subject.value,
-    //         message: event.target.message.value,
-    //     };
-
-    //     try {
-    //         const response = await fetch(BASE_URL + '/sendContactEmail', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify(data),
-    //         });
-
-    //         if (response.ok) {
-    //             notificationStore.set({ message: 'Message sent successfully!', type: 'success' });
-    //             setTimeout(() => {
-    //                 navigate('/', { replace: true });
-    //             }, 1000);
-    //         } else {
-    //             const errorText = await response.text();
-    //             throw new Error(errorText);
-    //         }
-    //     } catch (error) {
-    //         const errorMessage = JSON.parse(error.message);
-    //         if (errorMessage && errorMessage.error) {
-    //             notificationStore.set({ message: errorMessage.error, type: 'error' });
-    //         } else {
-    //             notificationStore.set({ message: 'An unknown error occurred', type: 'error' });
-    //         }
-    //     }
-    //     isSubmitting = false;
-    // }
 </script>
 
 <div class="form-container">

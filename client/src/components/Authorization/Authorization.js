@@ -9,7 +9,6 @@ export async function checkSession() {
 
         if (response.ok) {
             const responseData = await response.json();
-            console.log('responseData:', responseData);
             const { id, username, email, role, created_at, updated_at } = responseData.data;
 
             user.set({ isLoggedIn: true, user: { id, username, email, role, created_at, updated_at }, avatar: '' });

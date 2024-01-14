@@ -32,7 +32,7 @@ export default function (io) {
             };
             const event = await authorizationController.userUpdateEvent(updateData);
 
-            io.emit('event_updated', { event: event });
+            io.emit('event_changed', { event: event });
             res.send({ data: { message: 'Event updated successfully', event: event } });
         } catch (error) {
             res.status(400).send({ error: error.message });

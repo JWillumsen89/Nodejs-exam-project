@@ -1,6 +1,5 @@
 <script>
     import { closeModal } from 'svelte-modals';
-    import { onMount } from 'svelte';
     import { slide } from 'svelte/transition';
     import { user } from '../../stores/userStore.js';
     import { formatDateEuropean, subtractOneDay, addOneDay } from '../../utils/dateFormatting.js';

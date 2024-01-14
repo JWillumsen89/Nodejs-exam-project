@@ -69,7 +69,7 @@
         event.preventDefault();
 
         const data = {
-            username: event.target.username.value,
+            email: event.target.email.value,
             password: event.target.password.value,
         };
 
@@ -184,16 +184,16 @@
 
 <div class="form-container">
     <form on:submit={$isLogin ? handleSubmit : handleSignup}>
-        <label for="username">Username{$isLogin ? ' or email' : ''}:</label>
-        <input type="text" id="username" name="username" required value="willumsenjonathan@gmail.com"/>
-
         {#if !$isLogin}
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required />
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required />
         {/if}
 
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required value="willumsenjonathan@gmail.com" />
+
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required value="Bowie2018"/>
+        <input type="password" id="password" name="password" required value="Bowie2018" />
 
         {#if !$isLogin}
             <label for="passwordConfirmation">Confirm Password:</label>

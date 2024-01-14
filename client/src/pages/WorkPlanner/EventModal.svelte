@@ -6,7 +6,7 @@
     import { user } from '../../stores/userStore.js';
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
     import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-    import { Modals, openModal, closeModal } from 'svelte-modals';
+    import { closeModal } from 'svelte-modals';
     import { slide } from 'svelte/transition';
     import { formatDateEuropean, formatDateUS, addOneDay, subtractOneDay } from '../../utils/dateFormatting.js';
     import { capitalizeFirstLetter } from '../../utils/stringFormatting.js';
@@ -211,13 +211,6 @@
         showModal = false;
     }
 
-    function getEmployeeUsernameFromId(resourceId) {
-        if (!resourceId) {
-            return '';
-        }
-        const employee = employees.find(employee => employee.id === resourceId);
-        return employee.title;
-    }
 </script>
 
 {#if isOpen}
@@ -354,7 +347,7 @@
                                         <th>New End Date</th>
                                         <th>Handled By</th>
                                         <th>Handled (Date)</th>
-                                        <th>Reason/Comment</th>
+                                        <th>Handling Reason/Comment</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -365,9 +358,9 @@
                                             <td>{formatDateEuropean(request.createdAt, true)}</td>
                                             <td>{request.reasonForChange}</td>
                                             <td>{formatDateEuropean(subtractOneDay(request.requestNewEndDate), false)}</td>
-                                            <td>{request.handledByUsername}</td>
-                                            <td>{formatDateEuropean(request.handleAt, true)}</td>
-                                            <td>{request.reason}</td>
+                                            <td>{request.handledByUsername !== null ? request.handledByUsername : ''}</td>
+                                            <td>{request.handleAt !== null ? formatDateEuropean(request.handleAt, true) : ''}</td>
+                                            <td>{request.reason !== null ? request.reason : ''}</td>
                                         </tr>
                                     {/each}
                                 </tbody>
@@ -430,18 +423,60 @@
     .request-div {
         margin-top: 30px;
         background: #232221;
-        padding: 30px 20px 30px 20px;
+        padding: 20px;
         border-radius: 8px;
     }
 
     .request-btn-div {
         display: flex;
         justify-content: center;
+        margin-bottom: 20px;
     }
 
     .collapsible-content.visible {
         min-height: 400px;
         max-height: 600px;
         overflow-y: auto;
+    }
+    .request-table tr:hover td {
+        background-color: #4a4a4a;
+    }
+
+    .request-table {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: collapse;
+        margin: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        display: table;
+    }
+
+    .request-table th,
+    .request-table td {
+        background-color: #3a3a3a;
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid #444;
+        min-width: 155px;
+        max-width: 200px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .request-table td:empty {
+        background-color: #2e2e2e;
+        color: #757575;
+    }
+
+    .request-table td:empty::before {
+        content: 'None';
+        display: block;
+        text-align: center;
+    }
+
+    .request-table tr:hover td:empty {
+        background-color: #414141;
     }
 </style>

@@ -20,7 +20,7 @@
     async function updateEventRequestStatus(eventRequestId, status, reason, handledByUsername) {
         const data = {
             handledById: $user.user.id,
-            status,
+            handleStatus: status,
             reason,
             handledByUsername,
         };
@@ -143,7 +143,7 @@
                         <td>{request.handledByUsername}</td>
                         <td>{formatDateEuropean(request.handleAt, true)}</td>
                     {/if}
-                    <td>{(type === 'rejected' || type === 'approved') && request.reasonForRejection !== null ? request.reasonForRejection : ''}</td>
+                    <td>{(type === 'rejected' || type === 'approved') && request.reason !== null ? request.reason : ''}</td>
 
                     {#if type === 'pending'}
                         <td>

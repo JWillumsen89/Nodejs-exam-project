@@ -44,10 +44,10 @@ export async function createUser(username, email, password, role = 'user') {
     return userWithoutPassword;
 }
 
-export async function loginUser(loginInput, password) {
-    loginInput = loginInput.charAt(0).toUpperCase() + loginInput.slice(1).toLowerCase();
+export async function loginUser(inputEmail, password) {
+    inputEmail = inputEmail.toLowerCase();
 
-    const [result] = await pool.execute(`SELECT * FROM users WHERE email = ?`, [loginInput]);
+    const [result] = await pool.execute(`SELECT * FROM users WHERE email = ?`, [inputEmail]);
 
     if (result.length === 0) {
         throw new Error('User not found');

@@ -5,7 +5,7 @@ export const authService = {
         return createUser(userData.username, userData.email, userData.password, userData.role);
     },
     async loginUser(req, userData) {
-        const user = await loginUser(userData.username, userData.password);
+        const user = await loginUser(userData.email, userData.password);
         req.session.user = user;
         return user;
     },

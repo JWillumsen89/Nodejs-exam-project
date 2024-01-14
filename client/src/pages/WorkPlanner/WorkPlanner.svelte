@@ -86,30 +86,14 @@
         label: resource.title,
     }));
 
-    socket.on('user_signup', async () => {
+    socket.on('user_changed', async () => {
         if ($user.user.role === 'admin') {
             await fetchUsersData('/admin/get-all-users');
             await fetchEventsData('/admin/get-all-events');
         }
     });
 
-    socket.on('event_created', async () => {
-        if ($user.user.role === 'admin') {
-            await fetchEventsData('/admin/get-all-events');
-        } else if ($user.user.role === 'user') {
-            await fetchEventsData('/user/get-events');
-        }
-    });
-
-    socket.on('event_updated', async () => {
-        if ($user.user.role === 'admin') {
-            await fetchEventsData('/admin/get-all-events');
-        } else if ($user.user.role === 'user') {
-            await fetchEventsData('/user/get-events');
-        }
-    });
-
-    socket.on('event_deleted', async () => {
+    socket.on('event_changed', async () => {
         if ($user.user.role === 'admin') {
             await fetchEventsData('/admin/get-all-events');
         } else if ($user.user.role === 'user') {
@@ -187,18 +171,19 @@
             }
 
             const result = await response.json();
+
             const transformedData = result.data.map(event => ({
                 id: event.id,
-                resourceId: event.resource_id,
+                resourceId: event.resourceId,
                 start: event.start,
                 end: event.end,
                 title: event.title,
                 status: event.status,
                 description: event.description,
                 appraised: event.appraised,
-                resourceUsername: event.resource_username,
+                resourceUsername: event.resourceUsername,
                 classNames: `event-${event.status}`,
-                userUpdate: event.user_update,
+                userUpdate: event.userUpdate,
             }));
             allEvents = transformedData;
             console.log('all events', allEvents);
@@ -389,11 +374,6 @@
         buttonText: {
             today: 'Today',
         },
-        // headerToolbar: {
-        //     left: 'prev,next today',
-        //     center: 'title',
-        //     right: 'resourceTimelineWeek,twoWeeksTimeline,threeWeeksTimeline,resourceTimelineMonth',
-        // },
         headerToolbar: {
             left: 'customPrev,customNext today',
             center: 'title',
