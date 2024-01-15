@@ -10,7 +10,6 @@
     import Contact from './pages/Contact/Contact.svelte';
     import PageNotFound from './pages/PageNotFound/PageNotFound.svelte';
     import WorkPlanner from './pages/WorkPlanner/WorkPlanner.svelte';
-    
 
     import { onMount } from 'svelte';
     import { checkSession } from './components/Authorization/Authorization';
@@ -62,6 +61,4 @@
             </PrivateRoute>
         </div>
     </Router>
-{:else}
-    <!--show a loading spinner-->
 {/if}
