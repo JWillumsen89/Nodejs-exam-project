@@ -17,7 +17,7 @@ app.use(
     })
 );
 
-const sessionStore = new MySQLStore(session)(
+const sessionStore = new (MySQLStore(session))(
     {
         clearExpired: true,
         expiration: 86400000,
