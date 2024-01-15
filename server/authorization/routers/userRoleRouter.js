@@ -7,6 +7,7 @@ import { authorizationController } from '../controllers/authorizationController.
 
 export default function (io) {
     router.get('/user/profile', isAuthenticated, requireRole(['user']), (req, res) => {
+        console.log('req.session.user', req.session.user);
         res.send({ data: req.session.user });
     });
 
