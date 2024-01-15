@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express, { urlencoded } from 'express';
 const app = express();
 
+import session from 'express-session';
+import MySQLStore from 'express-mysql-session';
 import pool from './db/mysql/mysqlConnection.js';
 
 app.use(express.json());
@@ -15,11 +17,21 @@ app.use(
     })
 );
 
-import session from 'express-session';
+const sessionStore = new MySQLStore(session)(
+    {
+        clearExpired: true,
+        expiration: 86400000,
+        checkExpirationInterval: 3600000,
+        createDatabaseTable: true,
+    },
+    pool
+);
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
         resave: false,
+        store: sessionStore,
         saveUninitialized: true,
         // cookie: { secure: false },
         cookie: { secure: true },
