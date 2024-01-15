@@ -19,10 +19,10 @@
 
     export const isSessionChecked = writable(false);
 
-    onMount(async () => {
-        await checkSession();
-        isSessionChecked.set(true);
-    });
+    // onMount(async () => {
+    //     // await checkSession();
+    //     isSessionChecked.set(true);
+    // });
 
     const adminRole = ['admin'];
     const userRole = ['user', 'admin'];
@@ -40,7 +40,7 @@
     });
 </script>
 
-{#if $isSessionChecked}
+<!-- {#if $isSessionChecked} -->
     <Toaster />
     <Router>
         <Navbar />
@@ -61,4 +61,4 @@
             </PrivateRoute>
         </div>
     </Router>
-{/if}
+<!-- {/if} -->
