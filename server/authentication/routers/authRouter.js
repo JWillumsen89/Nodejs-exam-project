@@ -13,8 +13,12 @@ export default function (io) {
             if (req.body.app == true) {
                 req.session.cookie.maxAge = 14 * 24 * 60 * 60 * 1000;
             }
-
-            res.send({ data: { message: 'Login successful', body: req.body, sessionId: req.session.id } });
+            req.session.save(err => {
+                if (err) {
+                    throw err;
+                }
+                res.send({ data: { message: 'Login successful', body: req.body, sessionId: req.session.id } });
+            });
         } catch (error) {
             res.status(400).send({ error: error.message });
         }
