@@ -36,21 +36,20 @@ const sessionStore = new (MySQLStore(session))(
 );
 
 app.use(
-    session(
-        {
-            secret: process.env.SESSION_SECRET,
-            resave: false,
-            store: sessionStore,
-            saveUninitialized: false,
-            // cookie: { secure: false },
-            cookie: { secure: true, httpOnly: true, sameSite: 'lax' },
-        },
-        function (req, res, next) {
-            console.log('Session accessed:', req.sessionID);
-            next();
-        }
-    )
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        store: sessionStore,
+        saveUninitialized: false,
+        // cookie: { secure: false },
+        cookie: { secure: false, httpOnly: true, sameSite: 'lax' },
+    })
 );
+
+app.use((req, res, next) => {
+    console.log('Session accessed:', req.sessionID);
+    next();
+});
 
 import http from 'http';
 const server = http.createServer(app);
