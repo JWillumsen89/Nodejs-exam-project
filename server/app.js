@@ -52,7 +52,8 @@ app.use(
         resave: false,
         store: sessionStore,
         saveUninitialized: false,
-        cookie: { secure: true, httpOnly: true, sameSite: 'None', domain: 'jwillum.com' },
+        // cookie: { secure: true, httpOnly: true, sameSite: 'None', domain: 'jwillum.com' },
+        cookie: { secure: true, httpOnly: true, sameSite: 'None' },
     })
 );
 
