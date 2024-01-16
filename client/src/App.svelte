@@ -20,7 +20,7 @@
     export const isSessionChecked = writable(false);
 
     onMount(async () => {
-        // await checkSession();
+        await checkSession();
         isSessionChecked.set(true);
     });
 
