@@ -52,7 +52,7 @@ app.use(
         resave: false,
         store: sessionStore,
         saveUninitialized: false,
-        cookie: { secure: true, httpOnly: true, sameSite: 'None', domain: 'jw-workplanner-client-nodejs.onrender.com' },
+        cookie: { secure: true, httpOnly: true, sameSite: 'None', domain: 'jwillum.com' },
     })
 );
 
