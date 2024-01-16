@@ -13,7 +13,7 @@ app.use(urlencoded({ extended: true }));
 import cors from 'cors';
 app.use(
     cors({
-        origin: true,
+        origin: ['http://localhost:5173', 'https://jw-workplanner-client-nodejs.onrender.com'],
         credentials: true,
     })
 );
