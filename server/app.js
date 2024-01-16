@@ -42,7 +42,7 @@ app.use(
         store: sessionStore,
         saveUninitialized: false,
         // cookie: { secure: false },
-        cookie: { secure: false, httpOnly: true, sameSite: 'lax' },
+        cookie: { secure: false, httpOnly: true, sameSite: 'None' },
     })
 );
 
