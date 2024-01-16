@@ -35,25 +35,13 @@ const sessionStore = new (MySQLStore(session))(
     options
 );
 
-// app.use(
-//     session({
-//         secret: process.env.SESSION_SECRET,
-//         resave: false,
-//         store: sessionStore,
-//         saveUninitialized: false,
-//         // cookie: { secure: false },
-//         cookie: { secure: true, httpOnly: true, sameSite: 'None' },
-//     })
-// );
-
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
         resave: false,
         store: sessionStore,
         saveUninitialized: false,
-        // cookie: { secure: true, httpOnly: true, sameSite: 'None', domain: 'jwillum.com' },
-        cookie: { secure: true, httpOnly: true, sameSite: 'None' },
+        cookie: { secure: true, httpOnly: true, sameSite: 'None', domain: 'jwillum.com' },
     })
 );
 
