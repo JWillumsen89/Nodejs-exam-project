@@ -12,7 +12,6 @@
 
     onMount(async () => {
         if ($user.isLoggedIn) {
-            console.log('Check session is called from contact');
             await checkSession();
         }
     });

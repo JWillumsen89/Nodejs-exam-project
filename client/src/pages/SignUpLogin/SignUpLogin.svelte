@@ -6,6 +6,7 @@
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { navigate } from 'svelte-navigator';
     import { notificationStore } from '../../stores/notificationStore.js';
+    import { getRandomAvatarUrl } from '../../utils/getAvatar.js';
 
     $: pageTitle.set($isLogin ? 'Login' : 'Sign up'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
@@ -115,8 +116,7 @@
                 const responseData = await response.json();
                 const userData = responseData.data;
 
-                //Setting the user in the store, so the user can be accessed from any component
-                user.set({ isLoggedIn: true, user: userData, avatar: '' });
+                user.set({ isLoggedIn: true, user: userData, avatar: getRandomAvatarUrl() });
                 sessionStorage.setItem('userData', JSON.stringify(userData));
             } else {
                 console.error('Error fetching profile data: ', await response.text());

@@ -67,7 +67,6 @@
     });
 
     onMount(async () => {
-        console.log('Check session is called from work planner');
         if (await checkSession()) {
             isSessionChecked.set(true);
             if (calendarRef) {

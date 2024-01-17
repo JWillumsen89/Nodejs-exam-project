@@ -18,7 +18,6 @@
     let sortedUserList = [];
 
     onMount(async () => {
-        console.log("Check session is called from admin")
         if (await checkSession()) {
             isSessionChecked.set(true);
             await fetchAllUsersWithUserRole();
@@ -88,8 +87,6 @@
         background: #2d2d2d;
         border-radius: 10px;
     }
-
-    .admin-data,
     .users-title {
         text-align: center;
         margin-bottom: 20px;

@@ -4,7 +4,6 @@ import { notificationStore } from '../../stores/notificationStore.js';
 import { navigate } from 'svelte-navigator';
 
 export async function checkSession() {
-    console.log('Checking session...');
     try {
         const response = await fetch(BASE_URL + '/auth/validateSession', {
             method: 'POST',
@@ -18,12 +17,10 @@ export async function checkSession() {
             if (isValid) {
                 return true;
             } else {
-                await logoutUser();
-                navigate('/login-signup');
+                await logoutUser('Your session has expired. You have been logged out.');
                 return false;
             }
         }
-
         console.error('Session validation failed');
     } catch (error) {
         console.error('There was a problem checking the session:', error);
@@ -32,7 +29,7 @@ export async function checkSession() {
     return false;
 }
 
-async function logoutUser() {
+export async function logoutUser(message) {
     try {
         const response = await fetch(BASE_URL + '/auth/logout', {
             method: 'POST',
@@ -41,13 +38,10 @@ async function logoutUser() {
         if (response.ok) {
             user.set({ isLoggedIn: false, user: null, avatar: '' });
             sessionStorage.removeItem('userData');
-            notificationStore.set({ message: 'Your session has expired. You have been logged out.', type: 'success' });
-        } else {
-            console.error('Logout failed');
-            notificationStore.set({ message: 'Logout failed!', type: 'error' });
+            notificationStore.set({ message: message, type: 'success' });
+            navigate('/login-signup', { replace: true });
         }
     } catch (error) {
-        console.error('Logout failed:', error);
         notificationStore.set({ message: 'Logout failed!', type: 'error' });
     }
 }

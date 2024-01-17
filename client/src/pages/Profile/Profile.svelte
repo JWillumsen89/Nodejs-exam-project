@@ -16,15 +16,12 @@
     const isSessionChecked = writable(false);
 
     onMount(async () => {
-        console.log('Check session is called from profile');
         isSessionChecked.set(await checkSession());
     });
 
     let userData;
 
     $: userData = $user.user;
-
-    $: console.log('User data is', userData);
 
     function openChangePasswordModal() {
         openModal(PasswordChangeModal, { title: 'Change Password' });
