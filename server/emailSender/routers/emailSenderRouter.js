@@ -15,6 +15,7 @@ router.post('/sendContactEmail', async (req, res) => {
         },
     });
 
+    console.l
 
     const emailTemplate = `
         <div style="font-family: Arial, sans-serif; color: #333;">

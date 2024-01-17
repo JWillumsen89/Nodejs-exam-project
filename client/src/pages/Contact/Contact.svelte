@@ -82,10 +82,19 @@
         />
 
         <label for="subject">Subject:</label>
-        <input type="text" id="subject" name="subject" required placeholder="Enter subject..." disabled={isSubmitting} />
+        <input type="text" id="subject" name="subject" required placeholder="Enter subject..." bind:value={formData.subject} disabled={isSubmitting} />
 
         <label for="message">Message:</label>
-        <textarea id="message" name="message" required rows="15" style="resize: none;" placeholder="Enter message..." disabled={isSubmitting} />
+        <textarea
+            id="message"
+            name="message"
+            required
+            rows="15"
+            style="resize: none;"
+            placeholder="Enter message..."
+            bind:value={formData.message}
+            disabled={isSubmitting}
+        />
 
         <button id="submit-btn" type="submit" disabled={isSubmitting}>Send Message</button>
     </form>
