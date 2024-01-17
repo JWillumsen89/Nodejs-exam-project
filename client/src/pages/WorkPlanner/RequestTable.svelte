@@ -55,7 +55,6 @@
 
     async function openReasonCommentModal(type, request) {
         event = allEvents.find(event => event.id === request.eventId);
-        console.log('all data', type, request, event);
         openModal(ReasonModal, {
             onSubmit: data => handleUpdates(request.id, type, data.reason, data.newEndDate, data.handledByUsername),
             type,
@@ -65,8 +64,6 @@
     }
 
     async function handleUpdates(eventRequestId, type, reason, newEndDate, handledByUsername) {
-        console.log('All parameters', eventRequestId, type, reason, newEndDate, handledByUsername);
-        console.log('event', event);
 
         try {
             if (type === 'approved') {

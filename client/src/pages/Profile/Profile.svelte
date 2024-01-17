@@ -7,13 +7,24 @@
     import PasswordChangeModal from './PasswordChangeModal.svelte';
     import EditProfileModal from './EditProfileModal.svelte';
     import { formatDateEuropean } from '../../utils/dateFormatting.js';
+    import { onMount } from 'svelte';
+    import { checkSession } from '../../components/Authorization/Authorization.js';
+    import { writable } from 'svelte/store';
 
     $: pageTitle.set('Profile'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
+
+    const isSessionChecked = writable(false);
+
+    onMount(async () => {
+        console.log('Check session is called from profile');
+        isSessionChecked.set(await checkSession());
+    });
 
     let userData;
 
     $: userData = $user.user;
-    console.log($user.user);
+
+    $: console.log('User data is', userData);
 
     function openChangePasswordModal() {
         openModal(PasswordChangeModal, { title: 'Change Password' });
@@ -34,33 +45,35 @@
     }
 </script>
 
-<br />
-<Modals>
-    <div
-        slot="backdrop"
-        class="backdrop"
-        on:click={handleBackdropClick}
-        on:keydown={handleBackdropKeyDown}
-        tabindex="0"
-        role="button"
-        aria-label="Close modal"
-    />
-</Modals>
-<div class="form-container">
-    <img src={get(user).avatar} alt="Avatar" />
-    <div class="user-info">
-        {#if userData}
-            <h2><span class="user-label">Username:</span> {userData.username}</h2>
-            <h2><span class="user-label">Email:</span> {userData.email}</h2>
-            <h2><span class="user-label">Created at:</span> {formatDateEuropean(userData.created_at, true)}</h2>
-            <h2><span class="user-label">Updated at:</span> {formatDateEuropean(userData.updated_at, true)}</h2>
-        {/if}
+{#if $isSessionChecked}
+    <br />
+    <Modals>
+        <div
+            slot="backdrop"
+            class="backdrop"
+            on:click={handleBackdropClick}
+            on:keydown={handleBackdropKeyDown}
+            tabindex="0"
+            role="button"
+            aria-label="Close modal"
+        />
+    </Modals>
+    <div class="form-container">
+        <img src={get(user).avatar} alt="Avatar" />
+        <div class="user-info">
+            {#if userData}
+                <h2><span class="user-label">Username:</span> {userData.username}</h2>
+                <h2><span class="user-label">Email:</span> {userData.email}</h2>
+                <h2><span class="user-label">Created at:</span> {formatDateEuropean(userData.created_at, true)}</h2>
+                <h2><span class="user-label">Updated at:</span> {formatDateEuropean(userData.updated_at, true)}</h2>
+            {/if}
+        </div>
+        <div class="button-group">
+            <button on:click={openEditUsernameAndEmail}>Edit Profile</button>
+            <button on:click={openChangePasswordModal}>Change Password</button>
+        </div>
     </div>
-    <div class="button-group">
-        <button on:click={openEditUsernameAndEmail}>Edit Profile</button>
-        <button on:click={openChangePasswordModal}>Change Password</button>
-    </div>
-</div>
+{/if}
 
 <style>
     .form-container {

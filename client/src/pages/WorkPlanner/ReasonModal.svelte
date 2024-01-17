@@ -15,12 +15,6 @@
     $: finalInputDateNewEndDate = formatDateUS(addOneDay(new Date(inputDateNewEndDate)));
 
     async function handleSubmission() {
-        console.log('finalInputDateNewEndDate', finalInputDateNewEndDate);
-        console.log('reason', reason);
-        console.log('type', type);
-        console.log('event', event);
-        console.log('username', $user.user.username);
-
         let data = {
             reason,
             type,

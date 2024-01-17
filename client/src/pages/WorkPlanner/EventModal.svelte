@@ -45,7 +45,6 @@
     });
 
     onMount(() => {
-        console.log('Event requests: ', eventRequests);
         const today = new Date();
         const defaultStartDate = formatDateUS(today);
         const defaultEndDate = formatDateUS(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1));
@@ -81,8 +80,6 @@
     async function handleEventSubmission(event) {
         event.preventDefault();
         const { id, title, startDate, endDate, resourceId, description, status, appraised } = $eventFormData;
-
-        console.log('All data: ', $eventFormData);
 
         if (!title || !startDate || !endDate || !resourceId || !description || !status) {
             notificationStore.set({ message: 'Please fill in all fields', type: 'error' });

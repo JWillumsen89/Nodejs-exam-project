@@ -19,6 +19,7 @@
     import { slide } from 'svelte/transition';
     import { tick } from 'svelte';
     import { formatDateUS } from '../../utils/dateFormatting.js';
+    import { checkSession } from '../../components/Authorization/Authorization.js';
 
     import EventModal from './EventModal.svelte';
     import SearchResultModal from './SearchResultModal.svelte';
@@ -26,8 +27,10 @@
 
     $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
+    const isSessionChecked = writable(false);
+
     let calendarRef;
-    let calendarApi;
+    let calendarApi = null;
     let allEvents = [];
     let allResources = [];
     let selectedEventId = '';
@@ -64,20 +67,24 @@
     });
 
     onMount(async () => {
-        if (calendarRef) {
-            calendarApi = calendarRef.getAPI();
-        }
+        console.log('Check session is called from work planner');
+        if (await checkSession()) {
+            isSessionChecked.set(true);
+            if (calendarRef) {
+                calendarApi = calendarRef.getAPI();
+            }
 
-        if (!$user) {
-            return;
-        }
+            if (!$user) {
+                return;
+            }
 
-        let endpointUsersData = $user.user.role === 'admin' ? '/admin/get-all-users' : '/user/profile';
-        await fetchUsersData(endpointUsersData);
-        let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
-        await fetchEventsData(endpointEventsData);
-        if ($user.user.role === 'admin') {
-            await fetchAllEventRequests();
+            let endpointUsersData = $user.user.role === 'admin' ? '/admin/get-all-users' : '/user/profile';
+            await fetchUsersData(endpointUsersData);
+            let endpointEventsData = $user.user.role === 'admin' ? '/admin/get-all-events' : '/user/get-events';
+            await fetchEventsData(endpointEventsData);
+            if ($user.user.role === 'admin') {
+                await fetchAllEventRequests();
+            }
         }
     });
 
@@ -186,7 +193,6 @@
                 userUpdate: event.userUpdate,
             }));
             allEvents = transformedData;
-            console.log('all events', allEvents);
         } catch (error) {
             notificationStore.set({ message: error.message || 'Failed to fetch data', type: 'error' });
         }
@@ -203,7 +209,6 @@
             }
 
             const result = await response.json();
-            console.log(result.data);
             const eventRequests = result.data.map(request => {
                 const event = allEvents.find(e => e.id === request.eventId);
                 return { ...request, eventTitle: event ? event.title : 'Unknown Event' };
@@ -277,7 +282,6 @@
     }
 
     async function updateEventInDatabase(eventInfo, calendarApi) {
-        console.log(eventInfo.event);
         const event = calendarApi.getEventById(eventInfo.event.id);
 
         const resourceId = parseInt(event.getResources().map(resource => resource.id)[0]);
@@ -295,8 +299,6 @@
             appraised: event.extendedProps.appraised,
             resourceUsername: resourceUsernameFromEmployee,
         };
-
-        console.log('updated event', updatedEvent);
 
         try {
             const response = await fetch(BASE_URL + '/admin/update-event', {
@@ -608,7 +610,6 @@
 
     async function openEventModalFromRequestsList(eventId) {
         const event = await getEventById(eventId);
-        console.log(event);
 
         const eventData = {
             id: event[0].id,
@@ -621,8 +622,6 @@
             appraised: event[0].appraised,
             resourceUsername: event[0].resource_username,
         };
-
-        console.log(eventData);
 
         openModal(EventModal, {
             initialResource: eventData,

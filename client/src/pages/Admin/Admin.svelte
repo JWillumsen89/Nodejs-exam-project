@@ -4,17 +4,25 @@
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { formatDateEuropean } from '../../utils/dateFormatting.js';
+    import { checkSession } from '../../components/Authorization/Authorization.js';
     import io from 'socket.io-client';
     const socket = io(BASE_URL);
+    import { writable } from 'svelte/store';
 
     $: pageTitle.set('Admin Panel'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
+
+    const isSessionChecked = writable(false);
 
     let errorMessage = '';
     let userList = [];
     let sortedUserList = [];
 
     onMount(async () => {
-        await fetchAllUsersWithUserRole();
+        console.log("Check session is called from admin")
+        if (await checkSession()) {
+            isSessionChecked.set(true);
+            await fetchAllUsersWithUserRole();
+        }
     });
 
     socket.on('user_changed', async () => {
@@ -43,29 +51,31 @@
     }
 </script>
 
-<div class="content">
-    <h2 class="users-title">Users List</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Created At</th>
-                <th>Updated At</th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each sortedUserList as user}
+{#if $isSessionChecked}
+    <div class="content">
+        <h2 class="users-title">Users List</h2>
+        <table>
+            <thead>
                 <tr>
-                    <td>{user.username}</td>
-                    <td>{user.email}</td>
-                    <td>{formatDateEuropean(user.created_at, true)}</td>
-                    <td>{formatDateEuropean(user.updated_at, true)}</td>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
                 </tr>
-            {/each}
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                {#each sortedUserList as user}
+                    <tr>
+                        <td>{user.username}</td>
+                        <td>{user.email}</td>
+                        <td>{formatDateEuropean(user.created_at, true)}</td>
+                        <td>{formatDateEuropean(user.updated_at, true)}</td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+{/if}
 
 <style>
     .content {

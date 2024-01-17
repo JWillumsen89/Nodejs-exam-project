@@ -10,22 +10,25 @@
     import Contact from './pages/Contact/Contact.svelte';
     import PageNotFound from './pages/PageNotFound/PageNotFound.svelte';
     import WorkPlanner from './pages/WorkPlanner/WorkPlanner.svelte';
-
-    import { onMount } from 'svelte';
-    import { checkSession } from './components/Authorization/Authorization';
-    import { writable } from 'svelte/store';
     import toast, { Toaster } from 'svelte-french-toast';
     import { notificationStore } from './stores/notificationStore.js';
-
-    export const isSessionChecked = writable(false);
-
-    onMount(async () => {
-        await checkSession();
-        isSessionChecked.set(true);
-    });
+    import { user } from './stores/userStore.js';
+    import { onMount } from 'svelte';
+    import { writable } from 'svelte/store';
 
     const adminRole = ['admin'];
     const userRole = ['user', 'admin'];
+
+    const isLoading = writable(true);
+
+    onMount(() => {
+        const savedUserData = sessionStorage.getItem('userData');
+        if (savedUserData) {
+            const userData = JSON.parse(savedUserData);
+            user.set({ isLoggedIn: true, user: userData, avatar: '' });
+        }
+        isLoading.set(false);
+    });
 
     notificationStore.subscribe(({ message, type }) => {
         if (message) {
@@ -40,7 +43,9 @@
     });
 </script>
 
-{#if $isSessionChecked}
+{#if $isLoading}
+    <!-- Show loader or placeholder here -->
+{:else}
     <Toaster />
     <Router>
         <Navbar />

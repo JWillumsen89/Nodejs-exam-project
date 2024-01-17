@@ -117,6 +117,7 @@
 
                 //Setting the user in the store, so the user can be accessed from any component
                 user.set({ isLoggedIn: true, user: userData, avatar: '' });
+                sessionStorage.setItem('userData', JSON.stringify(userData));
             } else {
                 console.error('Error fetching profile data: ', await response.text());
             }
@@ -186,18 +187,18 @@
     <form on:submit={$isLogin ? handleSubmit : handleSignup}>
         {#if !$isLogin}
             <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required />
+            <input type="text" id="username" name="username" placeholder="Enter username..." required />
         {/if}
 
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required value="willumsenjonathan@gmail.com" />
+        <input type="email" id="email" name="email" required placeholder="Enter email..." />
 
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required value="Bowie2018" />
+        <input type="password" id="password" name="password" required placeholder="Enter password..." />
 
         {#if !$isLogin}
             <label for="passwordConfirmation">Confirm Password:</label>
-            <input type="password" id="passwordConfirmation" name="passwordConfirmation" required />
+            <input type="password" id="passwordConfirmation" name="passwordConfirmation" required placeholder="Confirm password..." />
         {/if}
 
         <button id="submit-btn" type="submit">{$isLogin ? 'Login' : 'Sign up'}</button>

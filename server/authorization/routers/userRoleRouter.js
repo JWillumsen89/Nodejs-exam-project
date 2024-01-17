@@ -41,7 +41,6 @@ export default function (io) {
 
     router.post('/user/send-request', isAuthenticated, requireRole(['user']), async (req, res) => {
         try {
-            console.log('req.body', req.body);
 
             const request = await authorizationController.sendRequest(req.body);
 

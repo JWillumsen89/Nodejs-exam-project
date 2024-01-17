@@ -8,13 +8,13 @@
     import { BASE_URL } from '../../utils/urls.js';
     import { useNavigate } from 'svelte-navigator';
     import { notificationStore } from '../../stores/notificationStore.js';
+    import { get } from 'svelte/store';
 
     const navigate = useNavigate();
 
     let open = false;
     let avatarUrl;
     $: title = $pageTitle;
-    $: user.set({ ...$user, avatar: avatarUrl });
 
     function closeMenu() {
         open = false;
@@ -28,13 +28,23 @@
             });
             if (response.ok) {
                 user.set({ isLoggedIn: false, user: null, avatar: '' });
+                console.log('Current user state:', get(user));
+                sessionStorage.removeItem('userData');
+                if (sessionStorage.getItem('userData') === null) {
+                    console.log('Session data cleared successfully.');
+                } else {
+                    console.log('Session data not cleared.');
+                }
+
                 notificationStore.set({ message: 'Successfully logged out!', type: 'success' });
+                navigate('/login-signup', { replace: true })
             }
         } catch (error) {
             notificationStore.set({ message: 'Logout failed!', type: 'error' });
         }
         closeMenu();
     }
+
     function getRandomAvatarUrl() {
         const avatarFunctions = [getAvatarUrl1, getAvatarUrl2, getAvatarUrl4, getAvatarUrl5, getAvatarUrl6];
 
@@ -69,6 +79,7 @@
 
     $: if ($user.isLoggedIn && !avatarUrl) {
         avatarUrl = getRandomAvatarUrl();
+        user.update(user => ({ ...user, avatar: avatarUrl }));
     }
 
     function clickAvatar() {
@@ -108,7 +119,7 @@
         {/if}
         <p><Link to="/contact" on:click={closeMenu}>Contact</Link></p>
         {#if $user.isLoggedIn}
-            <p><Link to="/login-signup" on:click={handleLogout}>Logout</Link></p>
+            <p><button class="logout-btn" on:click={handleLogout}>Logout</button></p>
         {:else}
             <p><Link to="/login-signup" on:click={closeMenu}>Login/Sign Up</Link></p>
         {/if}
@@ -172,6 +183,24 @@
         height: 50px;
         border-radius: 50%;
         margin-right: 10px;
+    }
+
+    .logout-btn {
+        /* background: none; */
+        border: none;
+        /* color: #ff9500; */
+        cursor: pointer;
+        font-size: 1em;
+        /* padding: 0; */
+        font-weight: inherit;
+        text-align: center;
+        font-family: inherit;
+        letter-spacing: inherit;
+        margin-top: 20px;
+    }
+
+    .logout-btn:hover {
+        text-decoration: underline;
     }
 
     @media (max-width: 1024px) {

@@ -5,8 +5,17 @@
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { user } from '../../stores/userStore.js';
+    import { onMount } from 'svelte';
+    import { checkSession } from '../../components/Authorization/Authorization.js';
 
     $: pageTitle.set('Contact'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
+
+    onMount(async () => {
+        if ($user.isLoggedIn) {
+            console.log('Check session is called from contact');
+            await checkSession();
+        }
+    });
 
     let formData = {
         name: $user.isLoggedIn ? $user.user.username : '',
@@ -47,7 +56,6 @@
             isSubmitting = false;
         }
     }
-
 </script>
 
 <div class="form-container">
@@ -97,8 +105,6 @@
     button {
         margin-top: 15px;
     }
-
-    
 
     @media (max-width: 768px) {
         .form-container {
