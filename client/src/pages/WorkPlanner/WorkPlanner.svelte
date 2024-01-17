@@ -12,7 +12,7 @@
     import { slide } from 'svelte/transition';
     import { tick } from 'svelte';
     import 'material-icons/iconfont/material-icons.css';
-    
+
     import { BASE_URL } from '../../utils/urls.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
@@ -612,16 +612,19 @@
     async function openEventModalFromRequestsList(eventId) {
         const event = await getEventById(eventId);
 
+        console.log('event', event);
+        console.log('event id', event.resourceUsername);
+
         const eventData = {
-            id: event[0].id,
-            title: event[0].title,
-            start: event[0].start,
-            end: event[0].end,
-            resourceId: event[0].resource_id,
-            description: event[0].description,
-            status: event[0].status,
-            appraised: event[0].appraised,
-            resourceUsername: event[0].resource_username,
+            id: event.id,
+            title: event.title,
+            start: event.start,
+            end: event.end,
+            resourceId: event.resourceId,
+            description: event.description,
+            status: event.status,
+            appraised: event.appraised,
+            resourceUsername: event.resourceUsername,
         };
 
         openModal(EventModal, {

@@ -2,7 +2,7 @@
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
     import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
     import { Modals, openModal, closeModal } from 'svelte-modals';
-    
+
     import { formatDateEuropean, formatDateUS, subtractOneDay } from '../../utils/dateFormatting.js';
     import { capitalizeFirstLetter } from '../../utils/stringFormatting.js';
     import { BASE_URL } from '../../utils/urls.js';
@@ -132,8 +132,8 @@
                     <td>{request.reasonForChange}</td>
                     <td>{formatDateEuropean(subtractOneDay(request.requestNewEndDate), false)}</td>
                     <td>{request.eventTitle}</td>
-                    <td><button class="table-btn" on:click={() => openEventModalFromRequestsList(request.eventId)}>Event Details</button></td>
-                    <td><button class="table-btn" on:click={() => goToEvent(request.eventId)}>Go To Event</button></td>
+                    <td><button class="table-btn request-table-btn" on:click={() => openEventModalFromRequestsList(request.eventId)}>Event Details</button></td>
+                    <td><button class="table-btn request-table-btn" on:click={() => goToEvent(request.eventId)}>Go To Event</button></td>
                     {#if type === 'pending'}
                         <td></td>
                         <td></td>
@@ -267,7 +267,9 @@
         background-color: #ef5350;
         transform: scale(1.3);
     }
-
+    .request-table-btn {
+        padding: 0.1;
+    }
     @media (max-width: 767px) {
         /* Responsive styles */
         .request-table,
