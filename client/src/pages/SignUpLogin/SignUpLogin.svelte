@@ -1,12 +1,13 @@
 <script>
-    import { BASE_URL } from '../../utils/urls.js';
     import { writable, get } from 'svelte/store';
+    import { navigate } from 'svelte-navigator';
+    
     import { user } from '../../stores/userStore.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
-    import { navigate } from 'svelte-navigator';
     import { notificationStore } from '../../stores/notificationStore.js';
     import { getRandomAvatarUrl } from '../../utils/getAvatar.js';
+    import { BASE_URL } from '../../utils/urls.js';
 
     $: pageTitle.set($isLogin ? 'Login' : 'Sign up'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 

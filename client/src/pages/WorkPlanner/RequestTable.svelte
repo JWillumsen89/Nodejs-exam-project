@@ -1,13 +1,15 @@
 <script>
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
     import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
-    import { user } from '../../stores/userStore.js';
-    import { BASE_URL } from '../../utils/urls.js';
     import { Modals, openModal, closeModal } from 'svelte-modals';
-    import ReasonModal from './ReasonModal.svelte';
-    import { formatDateEuropean, formatDateUS, addOneDay, subtractOneDay } from '../../utils/dateFormatting.js';
+    
+    import { formatDateEuropean, formatDateUS, subtractOneDay } from '../../utils/dateFormatting.js';
     import { capitalizeFirstLetter } from '../../utils/stringFormatting.js';
+    import { BASE_URL } from '../../utils/urls.js';
+    import { user } from '../../stores/userStore.js';
     import { notificationStore } from '../../stores/notificationStore.js';
+
+    import ReasonModal from './ReasonModal.svelte';
 
     export let requests = [];
     export let goToEvent;
@@ -64,7 +66,6 @@
     }
 
     async function handleUpdates(eventRequestId, type, reason, newEndDate, handledByUsername) {
-
         try {
             if (type === 'approved') {
                 await updateEvent(newEndDate);

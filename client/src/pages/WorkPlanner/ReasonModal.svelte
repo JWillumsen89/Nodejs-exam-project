@@ -1,5 +1,6 @@
 <script>
     import { closeModal } from 'svelte-modals';
+
     import { formatDateEuropean, formatDateUS, addOneDay, subtractOneDay } from '../../utils/dateFormatting.js';
     import { user } from '../../stores/userStore.js';
 

@@ -1,15 +1,18 @@
 <script>
-    import { pageTitle } from '../../stores/pageTitleStore.js';
-    import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
-    import { user } from '../../stores/userStore.js';
+    
     import { get } from 'svelte/store';
     import { Modals, openModal, closeModal } from 'svelte-modals';
+    import { writable } from 'svelte/store';
+    import { onMount } from 'svelte';
+    
+    import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
+    import { pageTitle } from '../../stores/pageTitleStore.js';
+    import { user } from '../../stores/userStore.js';
+    import { formatDateEuropean } from '../../utils/dateFormatting.js';
+    import { checkSession } from '../../components/Authorization/Authorization.js';
+
     import PasswordChangeModal from './PasswordChangeModal.svelte';
     import EditProfileModal from './EditProfileModal.svelte';
-    import { formatDateEuropean } from '../../utils/dateFormatting.js';
-    import { onMount } from 'svelte';
-    import { checkSession } from '../../components/Authorization/Authorization.js';
-    import { writable } from 'svelte/store';
 
     $: pageTitle.set('Profile'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 

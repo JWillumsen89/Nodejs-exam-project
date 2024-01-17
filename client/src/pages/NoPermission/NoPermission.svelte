@@ -1,5 +1,6 @@
 <script>
     import { navigate } from 'svelte-navigator';
+    
     import { user } from '../../stores/userStore.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';

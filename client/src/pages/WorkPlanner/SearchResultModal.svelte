@@ -1,6 +1,7 @@
 <script>
     import { closeModal } from 'svelte-modals';
     import { slide } from 'svelte/transition';
+    
     import { user } from '../../stores/userStore.js';
     import { formatDateEuropean, subtractOneDay, addOneDay } from '../../utils/dateFormatting.js';
 
@@ -120,7 +121,7 @@
                             <input id="resource-select" type="text" value={$user.user.username} disabled />
                         {:else if $user.user.role === 'admin'}
                             <select id="resource-select" bind:value={searchResource}>
-                                <option value={''} disabled>Select Resource</option>
+                                <option value={''}>No Resource Selected</option>
                                 {#each employees as employee}
                                     <option value={employee.id}>{employee.title}</option>
                                 {/each}
@@ -174,7 +175,7 @@
                         <div class="form-group">
                             <label for="status">Status:</label>
                             <select id="status" bind:value={searchStatus}>
-                                <option value={''} disabled>Select Status</option>
+                                <option value={''}>No Status Selected</option>
                                 <option value="booked">Booked</option>
                                 <option value="arrived">Arrived</option>
                                 <option value="appraisal">Appraisal</option>

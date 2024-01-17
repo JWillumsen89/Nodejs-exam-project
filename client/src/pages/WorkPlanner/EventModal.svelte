@@ -1,13 +1,14 @@
 <script>
-    import { notificationStore } from '../../stores/notificationStore.js';
     import { writable } from 'svelte/store';
     import { onMount } from 'svelte';
-    import { BASE_URL } from '../../utils/urls.js';
-    import { user } from '../../stores/userStore.js';
     import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
     import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
     import { closeModal } from 'svelte-modals';
     import { slide } from 'svelte/transition';
+    
+    import { notificationStore } from '../../stores/notificationStore.js';
+    import { user } from '../../stores/userStore.js';
+    import { BASE_URL } from '../../utils/urls.js';
     import { formatDateEuropean, formatDateUS, addOneDay, subtractOneDay } from '../../utils/dateFormatting.js';
     import { capitalizeFirstLetter } from '../../utils/stringFormatting.js';
 

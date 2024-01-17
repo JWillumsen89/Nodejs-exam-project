@@ -1,7 +1,8 @@
+import { navigate } from 'svelte-navigator';
+
 import { BASE_URL } from '../../utils/urls.js';
 import { user } from '../../stores/userStore.js';
 import { notificationStore } from '../../stores/notificationStore.js';
-import { navigate } from 'svelte-navigator';
 
 export async function checkSession() {
     try {

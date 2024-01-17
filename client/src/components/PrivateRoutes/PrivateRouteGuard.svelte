@@ -1,5 +1,6 @@
 <script>
-    import { navigate,useLocation } from 'svelte-navigator';
+    import { navigate, useLocation } from 'svelte-navigator';
+
     import { user } from '../../stores/userStore';
 
     export let roles = [];

@@ -1,11 +1,12 @@
 <script>
+    import { onMount } from 'svelte';
+    import { navigate } from 'svelte-navigator';
+
     import { BASE_URL } from '../../utils/urls.js';
     import { notificationStore } from '../../stores/notificationStore.js';
-    import { navigate } from 'svelte-navigator';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { user } from '../../stores/userStore.js';
-    import { onMount } from 'svelte';
     import { checkSession } from '../../components/Authorization/Authorization.js';
 
     $: pageTitle.set('Contact'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));

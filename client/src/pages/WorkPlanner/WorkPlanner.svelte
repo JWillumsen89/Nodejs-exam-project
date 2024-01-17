@@ -1,29 +1,31 @@
 <script>
     // @ts-nocheck
 
-    import { BASE_URL } from '../../utils/urls.js';
     import io from 'socket.io-client';
-    const socket = io(BASE_URL);
     import FullCalendar from 'svelte-fullcalendar';
     import interactionPlugin from '@fullcalendar/interaction';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
     import Select from 'svelte-select';
     import { Modals, openModal, closeModal } from 'svelte-modals';
-    import { pageTitle } from '../../stores/pageTitleStore.js';
-    import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { onMount, onDestroy } from 'svelte';
     import { writable } from 'svelte/store';
-    import { user } from '../../stores/userStore.js';
-    import { notificationStore } from '../../stores/notificationStore.js';
-    import 'material-icons/iconfont/material-icons.css';
     import { slide } from 'svelte/transition';
     import { tick } from 'svelte';
+    import 'material-icons/iconfont/material-icons.css';
+    
+    import { BASE_URL } from '../../utils/urls.js';
+    import { pageTitle } from '../../stores/pageTitleStore.js';
+    import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
+    import { user } from '../../stores/userStore.js';
+    import { notificationStore } from '../../stores/notificationStore.js';
     import { formatDateUS } from '../../utils/dateFormatting.js';
     import { checkSession } from '../../components/Authorization/Authorization.js';
 
     import EventModal from './EventModal.svelte';
     import SearchResultModal from './SearchResultModal.svelte';
     import RequestTable from './RequestTable.svelte';
+
+    const socket = io(BASE_URL);
 
     $: pageTitle.set('Work Planner'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 

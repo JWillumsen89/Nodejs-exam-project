@@ -1,16 +1,17 @@
 <script>
-    import { BASE_URL } from '../../utils/urls.js';
     import { onMount } from 'svelte';
+    import io from 'socket.io-client';
+    import { writable } from 'svelte/store';
+    
+    import { BASE_URL } from '../../utils/urls.js';
     import { pageTitle } from '../../stores/pageTitleStore.js';
     import { dynamicTitlePart, getFullTitle } from '../../stores/htmlTitleStore.js';
     import { formatDateEuropean } from '../../utils/dateFormatting.js';
     import { checkSession } from '../../components/Authorization/Authorization.js';
-    import io from 'socket.io-client';
-    const socket = io(BASE_URL);
-    import { writable } from 'svelte/store';
 
     $: pageTitle.set('Admin Panel'), dynamicTitlePart.set($pageTitle), (document.title = getFullTitle($dynamicTitlePart));
 
+    const socket = io(BASE_URL);
     const isSessionChecked = writable(false);
 
     let errorMessage = '';
