@@ -400,6 +400,10 @@ tbody tr {
   }
 }
 
+.logout-widget {
+  background-color: #474747;
+}
+
 
 
 @media (prefers-color-scheme: light) {

@@ -57,7 +57,7 @@
                 <h3>Contact Us</h3>
                 <p>Have questions or need assistance? We're here to help.</p>
             </button>
-            <button class="widget-box" on:click={() => logoutUser('Successfully logged out!')}>
+            <button class="widget-box logout-widget" on:click={() => logoutUser('Successfully logged out!')}>
                 <h3>Ready to Log Out?</h3>
                 <p>Wrapping up for today? Remember to log out for security!</p>
             </button>
