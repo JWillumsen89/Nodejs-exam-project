@@ -612,9 +612,6 @@
     async function openEventModalFromRequestsList(eventId) {
         const event = await getEventById(eventId);
 
-        console.log('event', event);
-        console.log('event id', event.resourceUsername);
-
         const eventData = {
             id: event.id,
             title: event.title,
